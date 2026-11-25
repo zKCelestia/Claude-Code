@@ -4,3 +4,8 @@ __pycache__/
 agent_config.json
 sessions.json
 uploaded_skills.json
+
+# burner wallet (rahasia & state lokal)
+.env.burner
+burner_policy.json
+burner_ledger.json

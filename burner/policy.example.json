@@ -1,0 +1,44 @@
+{
+  "_catatan": "Salin ke burner_policy.json lalu sesuaikan. Angka dalam unit koin native (ETH/BNB/SOL).",
+  "evm": {
+    "base": {
+      "chain_id": 8453,
+      "rpc": "https://mainnet.base.org",
+      "native": "ETH",
+      "max_per_tx": "0.002",
+      "max_per_day": "0.01",
+      "max_gas_gwei": 5,
+      "allowed_contracts": {
+        "0x0000000000000000000000000000000000000000": "GANTI dengan alamat kontrak mint/garapan yang kamu percaya"
+      }
+    },
+    "arbitrum": {
+      "chain_id": 42161,
+      "rpc": "https://arb1.arbitrum.io/rpc",
+      "native": "ETH",
+      "max_per_tx": "0.002",
+      "max_per_day": "0.01",
+      "max_gas_gwei": 5,
+      "allowed_contracts": {}
+    }
+  },
+  "solana": {
+    "rpc": "https://api.mainnet-beta.solana.com",
+    "max_per_tx": "0.05",
+    "max_per_day": "0.2",
+    "allowed_programs": {
+      "11111111111111111111111111111111": "System Program",
+      "ComputeBudget111111111111111111111111111111": "Compute Budget",
+      "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA": "SPL Token",
+      "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb": "Token-2022",
+      "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL": "Associated Token Account",
+      "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr": "Memo"
+    },
+    "allowed_recipients": {}
+  },
+  "autopilot": {
+    "enabled": false,
+    "interval_hours": 6,
+    "prompt": "Cek daftar garapan di bawah. Kerjakan yang bisa dikerjakan dengan burner wallet dalam batas policy, lalu laporkan singkat apa yang dilakukan dan sisa budget.\n\nDaftar garapan:\n- (isi tugasmu di sini, contoh: mint NFT gratis di kontrak X di Base setiap hari)"
+  }
+}

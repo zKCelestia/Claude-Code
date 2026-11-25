@@ -8,6 +8,11 @@ sebelumnya. Perintah:
 Pengguna juga bisa mengirim file/foto; file hasil buatan agent (Excel, Word,
 PowerPoint, PDF, dll.) di /mnt/session/outputs/ dikirim balik sebagai dokumen.
 
+Burner wallet (opsional, lihat burner/):
+  /wallet  - alamat, saldo, dan sisa budget
+  /stop    - pause semua transaksi burner (kill switch)
+  /resume  - aktifkan lagi
+
 Jalankan setelah setup_agent.py:  python bot.py
 """
 
@@ -47,6 +52,52 @@ ALLOWED_USER_IDS = {
     int(x) for x in os.environ.get("ALLOWED_USER_IDS", "").replace(" ", "").split(",") if x
 }
 
+# ---------- burner wallet (opsional) ----------
+burner = None
+BURNER_STATUS = "Burner wallet belum disiapkan (lihat README bagian Burner wallet)."
+try:
+    from burner.tools import Burner
+
+    burner = Burner()
+    if not ALLOWED_USER_IDS:
+        burner = None
+        BURNER_STATUS = (
+            "Burner dinonaktifkan: isi ALLOWED_USER_IDS di .env dulu, supaya orang lain "
+            "tidak bisa memakai saldo burner lewat bot."
+        )
+        log.warning(BURNER_STATUS)
+    else:
+        BURNER_STATUS = "aktif"
+        log.info("Burner wallet aktif (EVM: %s, Solana: %s)", burner.evm and burner.evm.address, burner.sol and burner.sol.address)
+except Exception as e:  # policy/.env.burner belum ada atau library belum terinstal
+    BURNER_STATUS = f"Burner tidak aktif: {e}"
+    log.info(BURNER_STATUS)
+
+
+def run_custom_tool(name: str, args: dict) -> tuple[str, dict | None]:
+    if name.startswith("burner_"):
+        if burner is None:
+            return f"Burner wallet tidak tersedia. {BURNER_STATUS}", None
+        return burner.run_tool(name, args)
+    return f"Tool tidak dikenal: {name}", None
+
+
+def format_tx(tx: dict) -> str:
+    if tx.get("rejected"):
+        return f"🛑 Burner menolak transaksi ({tx['tool']}):\n{tx['reason']}"
+    ref = tx.get("tx_hash") or tx.get("signature")
+    lines = [
+        f"🔥 Burner tx [{tx.get('chain')}]: {tx.get('status')}",
+        f"Biaya: {tx.get('cost')}",
+    ]
+    if tx.get("to"):
+        lines.append(f"Ke: {tx['to']} ({tx.get('to_label', '')})")
+    if tx.get("reason"):
+        lines.append(f"Alasan: {tx['reason']}")
+    lines.append(f"Ref: {ref}")
+    return "\n".join(lines)
+
+
 # chat_id -> {"session_id": ..., "sent_files": [file_id, ...]}
 sessions: dict[str, dict] = json.loads(SESSIONS_PATH.read_text()) if SESSIONS_PATH.exists() else {}
 for _k, _v in list(sessions.items()):  # format lama: chat_id -> session_id
@@ -59,7 +110,7 @@ def save_sessions() -> None:
     SESSIONS_PATH.write_text(json.dumps(sessions, indent=2))
 
 
-def get_or_create_session(chat_id: int) -> str:
+def get_or_create_session(chat_id: int | str) -> str:
     key = str(chat_id)
     if key not in sessions:
         session = client.beta.sessions.create(
@@ -116,14 +167,16 @@ def collect_new_outputs(chat_id: int, session_id: str, expect_files: bool) -> li
     return results
 
 
-def run_turn(session_id: str, text: str) -> tuple[str, bool]:
+def run_turn(session_id: str, text: str) -> tuple[str, bool, list[dict]]:
     """Kirim satu pesan ke session lalu kumpulkan balasan agent sampai session idle.
 
     Berjalan sinkron; dipanggil lewat asyncio.to_thread agar bot tetap responsif.
-    Mengembalikan (teks balasan, apakah agent menyentuh /mnt/session/outputs/).
+    Mengembalikan (teks balasan, apakah agent menyentuh /mnt/session/outputs/,
+    daftar transaksi burner yang terjadi).
     """
     parts: list[str] = []
     touched_outputs = False
+    txs: list[dict] = []
     # Stream-first: buka stream dulu, baru kirim pesan.
     with client.beta.sessions.events.stream(session_id=session_id) as stream:
         client.beta.sessions.events.send(
@@ -139,6 +192,20 @@ def run_turn(session_id: str, text: str) -> tuple[str, bool]:
                 getattr(event, "input", None), default=str
             ):
                 touched_outputs = True
+            if event.type == "agent.custom_tool_use":
+                result_text, tx = run_custom_tool(event.name, dict(event.input or {}))
+                if tx:
+                    txs.append(tx)
+                client.beta.sessions.events.send(
+                    session_id=session_id,
+                    events=[
+                        {
+                            "type": "user.custom_tool_result",
+                            "custom_tool_use_id": event.id,
+                            "content": [{"type": "text", "text": result_text}],
+                        }
+                    ],
+                )
             if event.type in ("agent.tool_use", "agent.mcp_tool_use") and getattr(
                 event, "evaluated_permission", None
             ) == "ask":
@@ -155,7 +222,7 @@ def run_turn(session_id: str, text: str) -> tuple[str, bool]:
             elif event.type == "session.status_terminated":
                 raise SessionGone()
     reply = "\n\n".join(p.strip() for p in parts if p.strip()) or "(Agent tidak memberi jawaban teks.)"
-    return reply, touched_outputs
+    return reply, touched_outputs, txs
 
 
 class SessionGone(Exception):
@@ -244,6 +311,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     stop_typing = asyncio.Event()
     typing_task = asyncio.create_task(keep_typing(update.effective_chat, stop_typing))
     outputs: list[tuple[str, bytes]] = []
+    txs: list[dict] = []
 
     try:
         async with lock:  # satu giliran per chat pada satu waktu
@@ -251,7 +319,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 session_id = await asyncio.to_thread(get_or_create_session, chat_id)
                 try:
                     prompt = await build_prompt(update, context, session_id)
-                    reply, wrote_outputs = await asyncio.to_thread(run_turn, session_id, prompt)
+                    reply, wrote_outputs, txs = await asyncio.to_thread(run_turn, session_id, prompt)
                     break
                 except (SessionGone, anthropic.NotFoundError):
                     log.warning("Session %s tidak bisa dipakai, membuat yang baru", session_id)
@@ -283,10 +351,92 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         stop_typing.set()
         await typing_task
 
+    for tx in txs:
+        await update.message.reply_text(format_tx(tx))
     for chunk in split_message(reply):
         await update.message.reply_text(chunk)
     for filename, data in outputs:
         await update.message.reply_document(document=data, filename=filename)
+
+
+async def wallet_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not is_allowed(update):
+        return
+    if burner is None:
+        await update.message.reply_text(BURNER_STATUS)
+        return
+    status = await asyncio.to_thread(burner.status)
+    lines = ["⏸ PAUSED" if status["paused"] else "▶️ Aktif"]
+    if status.get("evm_address"):
+        lines.append(f"\nEVM: {status['evm_address']}")
+        for name, c in status["evm"].items():
+            lines.append(f"  {name}: {c['saldo']} | sisa hari ini {c['sisa_hari_ini']}")
+    if status.get("solana"):
+        c = status["solana"]
+        lines.append(f"\nSolana: {c['address']}")
+        lines.append(f"  {c['saldo']} | sisa hari ini {c['sisa_hari_ini']}")
+    await update.message.reply_text("\n".join(lines))
+
+
+async def stop_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not is_allowed(update):
+        return
+    if burner is None:
+        await update.message.reply_text(BURNER_STATUS)
+        return
+    burner.guard.set_paused(True)
+    await update.message.reply_text("⏸ Burner di-pause. Semua transaksi ditolak sampai /resume.")
+
+
+async def resume_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not is_allowed(update):
+        return
+    if burner is None:
+        await update.message.reply_text(BURNER_STATUS)
+        return
+    burner.guard.set_paused(False)
+    await update.message.reply_text("▶️ Burner aktif lagi (tetap dalam batas policy).")
+
+
+async def autopilot_loop(app: Application) -> None:
+    """Jalankan tugas garapan berkala tanpa disuruh, lalu laporkan ke pemilik."""
+    await asyncio.sleep(60)
+    while True:
+        interval = 6.0
+        try:
+            if burner is not None:
+                burner.guard.reload()
+                cfg = burner.guard.policy.get("autopilot") or {}
+                interval = float(cfg.get("interval_hours", 6))
+                if cfg.get("enabled") and not burner.guard.paused:
+                    await run_autopilot_once(app, cfg["prompt"])
+        except Exception:
+            log.exception("Autopilot error")
+        await asyncio.sleep(max(0.25, interval) * 3600)
+
+
+async def run_autopilot_once(app: Application, prompt: str) -> None:
+    lock = chat_locks.setdefault("autopilot", asyncio.Lock())
+    async with lock:
+        session_id = await asyncio.to_thread(get_or_create_session, "autopilot")
+        log.info("Autopilot jalan (session %s)", session_id)
+        try:
+            reply, _, txs = await asyncio.to_thread(run_turn, session_id, "[AUTOPILOT]\n" + prompt)
+        except SessionGone:
+            sessions.pop("autopilot", None)
+            save_sessions()
+            return
+    report = ["🤖 Laporan autopilot"] + [format_tx(tx) for tx in txs] + [reply]
+    for owner in ALLOWED_USER_IDS:
+        for chunk in split_message("\n\n".join(report)):
+            try:
+                await app.bot.send_message(chat_id=owner, text=chunk)
+            except Exception:
+                log.exception("Gagal kirim laporan autopilot ke %s", owner)
+
+
+async def post_init(app: Application) -> None:
+    app.create_task(autopilot_loop(app))
 
 
 def main() -> None:
@@ -294,9 +444,12 @@ def main() -> None:
     if not token:
         raise SystemExit("TELEGRAM_BOT_TOKEN belum diisi di file .env")
 
-    app = Application.builder().token(token).concurrent_updates(True).build()
+    app = Application.builder().token(token).concurrent_updates(True).post_init(post_init).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("reset", reset))
+    app.add_handler(CommandHandler("wallet", wallet_cmd))
+    app.add_handler(CommandHandler("stop", stop_cmd))
+    app.add_handler(CommandHandler("resume", resume_cmd))
     app.add_handler(
         MessageHandler(
             (filters.TEXT & ~filters.COMMAND) | filters.Document.ALL | filters.PHOTO, handle_message

@@ -46,6 +46,59 @@ python setup_agent.py                   # pasang skill yang terunggah ke agent
 - Aset berat (video/font/gambar) dilewati saat unggah agar paket skill kecil.
 - Hapus skill yang tak terpakai lewat Console (platform.claude.com) bila perlu.
 
+## Burner wallet (garapan otomatis)
+
+Bot bisa memakai **burner wallet** EVM + Solana bersaldo kecil untuk mint dan tugas
+airdrop secara otomatis, termasuk berkala tanpa disuruh (autopilot). Agent tidak pernah
+memegang private key. Agent hanya mengirim permintaan lewat tool `burner_*`, lalu bot
+menandatanganinya di mesinmu **setelah lolos guard**.
+
+**Guard yang selalu aktif** (`burner/policy.py`):
+
+- Batas pengeluaran per transaksi dan per hari (UTC), per chain. Gas ikut dihitung.
+- Tujuan harus ada di daftar izin: `allowed_contracts` (EVM), `allowed_programs` dan `allowed_recipients` (Solana).
+- Fungsi yang biasa dipakai drainer **selalu diblokir**: `approve`, `setApprovalForAll`, `permit`,
+  transfer token/NFT, `multicall`/`aggregate`, serta instruksi SPL Token `Transfer`/`Approve`/`SetAuthority`.
+- Tidak ada tool untuk tanda tangan pesan (EIP-712/permit), jadi tidak bisa dipancing tanda tangan "gasless".
+- Setiap transaksi disimulasikan dulu. Yang akan revert atau ternyata menguras SOL lebih dari budget ditolak.
+- Batas `max_gas_gwei`, kill switch `/stop`, dan semua transaksi tercatat di `burner_ledger.json`.
+- Burner **nonaktif kalau `ALLOWED_USER_IDS` kosong**, supaya orang lain tidak bisa memakai saldomu lewat bot.
+
+### Menyiapkan
+
+```bash
+python -m burner.create_wallets                 # buat wallet, key ke .env.burner (izin 600)
+cp burner/policy.example.json burner_policy.json
+# edit burner_policy.json: RPC, batas, kontrak/program yang diizinkan, daftar tugas autopilot
+python setup_agent.py                           # daftarkan tool burner ke agent
+python bot.py
+```
+
+Lalu isi alamat yang dicetak dengan saldo **seperlunya saja**. Di Telegram:
+
+| Perintah | Fungsi |
+|---|---|
+| `/wallet` | Alamat, saldo, sisa budget hari ini |
+| `/stop` | Pause semua transaksi burner |
+| `/resume` | Aktifkan lagi |
+
+Contoh perintah: "mint NFT gratis di kontrak 0x... di Base" (kontraknya harus sudah ada di
+`allowed_contracts`). Setiap transaksi dan penolakan dilaporkan ke chat.
+
+### Autopilot (jalan sendiri)
+
+Di `burner_policy.json`, set `"autopilot": {"enabled": true, "interval_hours": 6, "prompt": "..."}`
+dan tulis daftar garapanmu di `prompt`. Bot menjalankannya berkala dan mengirim laporan ke
+setiap ID di `ALLOWED_USER_IDS`. Autopilot berhenti saat `/stop`.
+
+### Catatan penting
+
+- Pakai wallet ini **hanya** untuk garapan. Jangan pindahkan aset berharga ke sana.
+- Tidak ada fitur multi-wallet/sybil. Itu melanggar aturan hampir semua airdrop dan biasanya berujung diskualifikasi.
+- Akses web agent defaultnya mati. Agar agent bisa membuka situs mint/garapan, nyalakan web
+  dan daftarkan host-nya (lihat "Menyalakan pencarian web").
+- Test guard: `pip install "web3[tester]" pytest && pytest tests/`
+
 ## Cara kerja
 
 - **`setup_agent.py`** dijalankan sekali. Script ini membuat *Environment* dan *Agent* di
