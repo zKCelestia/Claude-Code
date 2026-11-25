@@ -20,7 +20,7 @@ langsung dikirim balik ke chat sebagai dokumen.
 
 ## Pustaka skill (asa-skills-pack)
 
-Repo ini memuat **359 skill** di `.claude/skills/` (lihat `.claude/skills/CATALOG.md`).
+Repo ini memuat **428 skill** di `.claude/skills/` (lihat `.claude/skills/CATALOG.md`).
 Claude Code memuatnya otomatis berdasarkan deskripsi tiap skill, jadi tidak perlu
 diaktifkan manual. Isinya antara lain security/bug-bounty, crypto/trading, otomasi, dan
 pembuatan konten.
