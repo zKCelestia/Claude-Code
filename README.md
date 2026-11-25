@@ -46,6 +46,60 @@ python setup_agent.py                   # pasang skill yang terunggah ke agent
 - Aset berat (video/font/gambar) dilewati saat unggah agar paket skill kecil.
 - Hapus skill yang tak terpakai lewat Console (platform.claude.com) bila perlu.
 
+## Mode grup: Claude ngobrol bareng Muse
+
+Bot Claude bisa gabung ke grup Telegram bersama bot-bot lain (misalnya Muse-mu) dan
+manusia, lalu ikut ngobrol, bagi tugas, dan tukar ilmu tanpa disuruh. Ide dasarnya
+mengikuti tutorial "3 Muse ngobrol di grup", dengan tambahan rem biaya.
+
+### Menyiapkan
+
+1. Di @BotFather, buka mini app-nya, pilih bot, **Bot Settings**, lalu nyalakan
+   **Bot to Bot Communication Mode**. Lakukan untuk **setiap** bot (Claude dan semua bot Muse).
+   Tanpa ini, bot tidak bisa membaca pesan bot lain, walaupun admin.
+2. Masukkan semua bot ke grup dan jadikan **admin** (supaya bisa membaca semua pesan).
+3. Ketik `/status` di grup. Bot membalas dengan ID grup. Isi ID itu ke `GROUP_CHAT_IDS`
+   di `.env`, lalu restart bot.
+4. Pastikan `ALLOWED_USER_IDS` berisi ID Telegram-mu, supaya bot tahu siapa pemilik.
+
+Satu token bot hanya boleh dipakai satu proses. Kalau dua proses memakai token yang sama,
+Telegram membalas **409 Conflict** dan bot berhenti menerima pesan (pesannya muncul jelas di log).
+
+### Cara kerjanya
+
+- **Inbox:** pesan grup dikumpulkan lalu dikirim ke Claude sebagai satu giliran setiap
+  ~20 detik. Kalau Claude di-mention atau di-reply, ia membalas dalam ~3 detik.
+- Claude memutuskan sendiri mau menanggapi atau diam (`[DIAM]`).
+- **Outbox:** jarak antar pesan keluar minimal 5 detik.
+- **Watchdog:** setiap 5 menit bot mengecek koneksi ke Telegram. Kalau gagal 3 kali
+  berturut-turut, proses keluar supaya di-restart oleh systemd/pm2/docker.
+- Hanya teks yang diproses, karena file dari bot lain memang tidak terkirim ke bot.
+
+### Rem biaya (bisa diatur di `.env`)
+
+| Variabel | Default | Arti |
+|---|---|---|
+| `GROUP_MAX_BOT_STREAK` | 10 | Maks balasan beruntun ke obrolan yang isinya bot saja. Setelah itu Claude diam sampai ada manusia menulis |
+| `GROUP_MAX_TURNS_PER_HOUR` | 30 | Maks giliran Claude per jam per grup (termasuk saat ia memilih diam) |
+| `GROUP_BOT_ONLY_INTERVAL` | 120 | Jarak minimal (detik) antar giliran yang isinya pesan bot saja |
+| `GROUP_DEBOUNCE_SECONDS` | 20 | Waktu tunggu mengumpulkan pesan sebelum diproses |
+
+Pesanmu yang me-mention Claude **selalu dilayani**, walaupun batas per jam tercapai.
+Bot Muse gratis, tapi setiap giliran Claude memakai kredit API. Pantau pemakaian di Console.
+
+### Keamanan
+
+- Pesan dari bot lain dan anggota selain pemilik dianggap **obrolan, bukan perintah**.
+- Tool burner wallet hanya jalan kalau giliran itu berisi pesan **pemilik yang menyapa Claude**.
+  Bot Muse tidak bisa memicu transaksi sama sekali, apa pun isi pesannya.
+
+### Perintah di grup
+
+| Perintah | Fungsi |
+|---|---|
+| `/status` | Papan status: siapa terakhir ngomong, kapan, siapa yang nggak aktif, sisa budget giliran |
+| `/jewer` | Mention anggota yang nggak aktif supaya ikut ngobrol lagi (pemilik saja) |
+
 ## Burner wallet (garapan otomatis)
 
 Bot bisa memakai **burner wallet** EVM + Solana bersaldo kecil untuk mint dan tugas

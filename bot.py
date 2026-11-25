@@ -13,6 +13,11 @@ Burner wallet (opsional, lihat burner/):
   /stop    - pause semua transaksi burner (kill switch)
   /resume  - aktifkan lagi
 
+Mode grup (lihat group_chat.py): ngobrol bareng bot lain (mis. Muse) di grup
+yang ID-nya ada di GROUP_CHAT_IDS.
+  /status  - siapa terakhir ngomong, siapa yang nggak aktif
+  /jewer   - mention anggota yang nggak aktif (pemilik saja)
+
 Jalankan setelah setup_agent.py:  python bot.py
 """
 
@@ -28,7 +33,10 @@ import anthropic
 from dotenv import load_dotenv
 from telegram import Update
 from telegram.constants import ChatAction
+from telegram.error import Conflict
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
+
+from group_chat import GroupManager, GroupSettings, Incoming
 
 BASE_DIR = Path(__file__).parent
 CONFIG_PATH = BASE_DIR / "agent_config.json"
@@ -52,6 +60,12 @@ ALLOWED_USER_IDS = {
     int(x) for x in os.environ.get("ALLOWED_USER_IDS", "").replace(" ", "").split(",") if x
 }
 
+GROUP_CHAT_IDS = {
+    int(x) for x in os.environ.get("GROUP_CHAT_IDS", "").replace(" ", "").split(",") if x
+}
+WATCHDOG_INTERVAL = 300  # detik
+WATCHDOG_MAX_FAILS = 3
+
 # ---------- burner wallet (opsional) ----------
 burner = None
 BURNER_STATUS = "Burner wallet belum disiapkan (lihat README bagian Burner wallet)."
@@ -74,8 +88,14 @@ except Exception as e:  # policy/.env.burner belum ada atau library belum terins
     log.info(BURNER_STATUS)
 
 
-def run_custom_tool(name: str, args: dict) -> tuple[str, dict | None]:
+def run_custom_tool(name: str, args: dict, allow_burner: bool = True) -> tuple[str, dict | None]:
     if name.startswith("burner_"):
+        if not allow_burner and name != "burner_status":
+            reason = (
+                "Transaksi burner hanya boleh atas perintah langsung pemilik. Giliran ini dipicu "
+                "pesan grup/bot lain, jadi tidak dijalankan."
+            )
+            return f"DITOLAK: {reason}", {"rejected": True, "tool": name, "reason": reason}
         if burner is None:
             return f"Burner wallet tidak tersedia. {BURNER_STATUS}", None
         return burner.run_tool(name, args)
@@ -167,7 +187,7 @@ def collect_new_outputs(chat_id: int, session_id: str, expect_files: bool) -> li
     return results
 
 
-def run_turn(session_id: str, text: str) -> tuple[str, bool, list[dict]]:
+def run_turn(session_id: str, text: str, allow_burner: bool = True) -> tuple[str, bool, list[dict]]:
     """Kirim satu pesan ke session lalu kumpulkan balasan agent sampai session idle.
 
     Berjalan sinkron; dipanggil lewat asyncio.to_thread agar bot tetap responsif.
@@ -193,7 +213,7 @@ def run_turn(session_id: str, text: str) -> tuple[str, bool, list[dict]]:
             ):
                 touched_outputs = True
             if event.type == "agent.custom_tool_use":
-                result_text, tx = run_custom_tool(event.name, dict(event.input or {}))
+                result_text, tx = run_custom_tool(event.name, dict(event.input or {}), allow_burner)
                 if tx:
                     txs.append(tx)
                 client.beta.sessions.events.send(
@@ -435,8 +455,126 @@ async def run_autopilot_once(app: Application, prompt: str) -> None:
                 log.exception("Gagal kirim laporan autopilot ke %s", owner)
 
 
+# ---------------------------------------------------------------- mode grup
+groups: GroupManager | None = None
+
+
+async def group_turn(chat_id: int, prompt: str, allow_burner: bool) -> tuple[str, list[dict]]:
+    lock = chat_locks.setdefault(chat_id, asyncio.Lock())
+    async with lock:
+        for attempt in range(2):
+            session_id = await asyncio.to_thread(get_or_create_session, chat_id)
+            try:
+                reply, _, txs = await asyncio.to_thread(run_turn, session_id, prompt, allow_burner)
+                return reply, txs
+            except (SessionGone, anthropic.NotFoundError):
+                sessions.pop(str(chat_id), None)
+                save_sessions()
+                if attempt == 1:
+                    raise
+    return "", []
+
+
+def is_addressed(msg, me_id: int | None, me_username: str | None) -> bool:
+    text = (msg.text or "").lower()
+    if me_username and f"@{me_username.lower()}" in text:
+        return True
+    reply = msg.reply_to_message
+    return bool(reply and reply.from_user and reply.from_user.id == me_id)
+
+
+async def handle_group_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    msg = update.effective_message
+    chat = update.effective_chat
+    if groups is None or not msg or not msg.text or not msg.from_user:
+        return
+    if chat.id not in GROUP_CHAT_IDS:
+        return
+    user = msg.from_user
+    groups.receive(
+        chat.id,
+        chat.title or "",
+        Incoming(
+            user_id=user.id,
+            name=user.full_name or user.username or str(user.id),
+            username=user.username,
+            is_bot=bool(user.is_bot),
+            is_owner=user.id in ALLOWED_USER_IDS,
+            addressed=is_addressed(msg, groups.me_id, groups.me_username),
+            text=msg.text,
+        ),
+    )
+
+
+async def status_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    chat = update.effective_chat
+    if groups is None or chat.id not in GROUP_CHAT_IDS:
+        if is_allowed(update):
+            await update.effective_message.reply_text(
+                f"Mode grup belum aktif di chat ini. ID chat ini: {chat.id}\n"
+                "Tambahkan ke GROUP_CHAT_IDS di .env lalu restart bot."
+            )
+        return
+    await update.effective_message.reply_text(groups.status_text(chat.id))
+
+
+async def jewer_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    chat = update.effective_chat
+    if groups is None or chat.id not in GROUP_CHAT_IDS or not is_allowed(update):
+        return
+    names = groups.inactive_mentions(chat.id)
+    if not names:
+        await update.effective_message.reply_text("Semua masih aktif, nggak ada yang perlu dijewer 👍")
+        return
+    await update.effective_message.reply_text(
+        " ".join(names) + " 👋 kalian ke mana? Ayo ikut ngobrol lagi, kasih update terbaru kalian."
+    )
+
+
+# ---------------------------------------------------------------- watchdog
+async def watchdog_loop(app: Application) -> None:
+    """Cek koneksi ke Telegram secara berkala, bukan cuma 'proses masih hidup'.
+
+    Kalau gagal berkali-kali berturut-turut, proses keluar dengan kode 1 supaya
+    systemd/pm2/docker me-restart bot.
+    """
+    fails = 0
+    while True:
+        await asyncio.sleep(WATCHDOG_INTERVAL)
+        try:
+            await app.bot.get_me()
+            fails = 0
+        except Exception as e:
+            fails += 1
+            log.warning("Watchdog: cek Telegram gagal (%s/%s): %s", fails, WATCHDOG_MAX_FAILS, e)
+            if fails >= WATCHDOG_MAX_FAILS:
+                log.error("Watchdog: Telegram tidak bisa dijangkau. Keluar supaya di-restart.")
+                os._exit(1)
+
+
+async def on_error(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if isinstance(context.error, Conflict):
+        log.error(
+            "409 Conflict: token bot ini sedang dipakai proses lain (getUpdates). "
+            "Telegram cuma izinkan 1 poller per bot. Matikan proses lain atau pakai token berbeda."
+        )
+        return
+    log.error("Error saat memproses update", exc_info=context.error)
+
+
 async def post_init(app: Application) -> None:
+    global groups
     app.create_task(autopilot_loop(app))
+    app.create_task(watchdog_loop(app))
+    if GROUP_CHAT_IDS:
+        me = await app.bot.get_me()
+
+        async def send(chat_id: int, text: str) -> None:
+            await app.bot.send_message(chat_id=chat_id, text=text)
+
+        groups = GroupManager(GROUP_CHAT_IDS, ALLOWED_USER_IDS, group_turn, send, format_tx, GroupSettings.from_env())
+        groups.me_id, groups.me_username = me.id, me.username
+        log.info("Mode grup aktif untuk %s sebagai @%s", sorted(GROUP_CHAT_IDS), me.username)
 
 
 def main() -> None:
@@ -450,11 +588,19 @@ def main() -> None:
     app.add_handler(CommandHandler("wallet", wallet_cmd))
     app.add_handler(CommandHandler("stop", stop_cmd))
     app.add_handler(CommandHandler("resume", resume_cmd))
+    app.add_handler(CommandHandler("status", status_cmd))
+    app.add_handler(CommandHandler("jewer", jewer_cmd))
+    # Grup: semua pesan teks (termasuk dari bot lain) masuk inbox grup.
+    app.add_handler(MessageHandler(filters.ChatType.GROUPS & filters.TEXT & ~filters.COMMAND, handle_group_message))
+    # Chat pribadi dengan pemilik: perilaku lama (teks, file, foto).
     app.add_handler(
         MessageHandler(
-            (filters.TEXT & ~filters.COMMAND) | filters.Document.ALL | filters.PHOTO, handle_message
+            filters.ChatType.PRIVATE
+            & ((filters.TEXT & ~filters.COMMAND) | filters.Document.ALL | filters.PHOTO),
+            handle_message,
         )
     )
+    app.add_error_handler(on_error)
     log.info("Bot berjalan. Tekan Ctrl+C untuk berhenti.")
     app.run_polling(allowed_updates=Update.ALL_TYPES)
 
