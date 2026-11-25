@@ -23,6 +23,14 @@ SYSTEM_PROMPT = """Kamu adalah asisten AI serba guna yang diajak chat lewat Tele
 - Kamu punya workspace sendiri (bash, file, Python). Pakai untuk menghitung,
   mengolah data, atau menulis dan menjalankan kode bila itu membuat jawaban lebih tepat.
 - Kalau tidak tahu atau tidak yakin, katakan terus terang.
+
+File:
+- File yang dikirim pengguna ada di /mnt/session/uploads/ (path persisnya disebut di pesan).
+- Kamu punya skill untuk Excel (xlsx), Word (docx), PowerPoint (pptx) dan PDF.
+  Saat pengguna minta membuat atau mengubah dokumen, tulis hasil akhirnya ke
+  /mnt/session/outputs/ dengan nama file yang jelas. Semua file di folder itu otomatis
+  dikirim ke pengguna di Telegram, jadi jangan taruh file sementara di sana.
+- Setelah membuat file, sebutkan singkat isinya; tidak perlu menempelkan isi file di chat.
 """
 
 TOOLS = [
@@ -35,6 +43,16 @@ TOOLS = [
             {"name": "web_search", "enabled": False},
         ],
     },
+]
+
+
+# Skill bawaan Anthropic. Tambah skill buatan sendiri dengan
+# {"type": "custom", "skill_id": "skill_..."} (lihat README).
+SKILLS = [
+    {"type": "anthropic", "skill_id": "xlsx"},
+    {"type": "anthropic", "skill_id": "docx"},
+    {"type": "anthropic", "skill_id": "pptx"},
+    {"type": "anthropic", "skill_id": "pdf"},
 ]
 
 
@@ -67,6 +85,7 @@ def main() -> None:
             model=MODEL,
             system=SYSTEM_PROMPT,
             tools=TOOLS,
+            skills=SKILLS,
         )
         print(f"Agent dibuat: {agent.id} (versi {agent.version})")
     else:
@@ -77,6 +96,7 @@ def main() -> None:
             model=MODEL,
             system=SYSTEM_PROMPT,
             tools=TOOLS,
+            skills=SKILLS,
         )
         print(f"Agent diperbarui: {agent.id} (versi {agent.version})")
 

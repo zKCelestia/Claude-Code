@@ -4,6 +4,20 @@ Bot Telegram yang menjawab chat dengan AI agent dari Claude. Agent punya workspa
 sendiri (bash, file, Python) untuk menghitung dan mengolah data, dan ingat isi percakapan
 per chat.
 
+## Skill
+
+Agent dilengkapi skill bawaan Anthropic:
+
+| Skill | Contoh permintaan |
+|---|---|
+| `xlsx` (Excel) | "Buatkan tabel cicilan 12 bulan dalam Excel", kirim file .xlsx lalu "hitung totalnya" |
+| `docx` (Word) | "Buatkan surat penawaran dalam Word" |
+| `pptx` (PowerPoint) | "Buat 5 slide presentasi tentang produk saya" |
+| `pdf` | Kirim PDF lalu "ringkas isinya", atau "jadikan ini PDF" |
+
+Kamu bisa mengirim file atau foto ke bot (maksimal 20 MB). File yang dibuat agent
+langsung dikirim balik ke chat sebagai dokumen.
+
 ## Cara kerja
 
 - **`setup_agent.py`** dijalankan sekali. Script ini membuat *Environment* dan *Agent* di
@@ -49,6 +63,17 @@ Buka bot kamu di Telegram dan mulai chat. Ketik `/reset` untuk memulai percakapa
 | Model | Ubah `MODEL` di `setup_agent.py` (default `claude-opus-5-5`) |
 | Siapa yang boleh memakai bot | Isi `ALLOWED_USER_IDS` di `.env` dengan ID Telegram (cek lewat @userinfobot), dipisah koma |
 | Akses internet (cari web) | Lihat di bawah |
+| Skill | Ubah daftar `SKILLS` di `setup_agent.py`, lalu jalankan `python setup_agent.py` lagi |
+
+### Menambah skill buatan sendiri
+
+Skill adalah folder berisi `SKILL.md` (instruksi) beserta script atau file pendukung.
+Unggah lewat Skills API atau Console (platform.claude.com), lalu tambahkan ID-nya ke
+`SKILLS`:
+
+```python
+{"type": "custom", "skill_id": "skill_xxx", "version": "latest"},
+```
 
 ### Menyalakan pencarian web
 
