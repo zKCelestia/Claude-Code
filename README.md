@@ -18,6 +18,34 @@ Agent dilengkapi skill bawaan Anthropic:
 Kamu bisa mengirim file atau foto ke bot (maksimal 20 MB). File yang dibuat agent
 langsung dikirim balik ke chat sebagai dokumen.
 
+## Pustaka skill (asa-skills-pack)
+
+Repo ini memuat **359 skill** di `.claude/skills/` (lihat `.claude/skills/CATALOG.md`).
+Claude Code memuatnya otomatis berdasarkan deskripsi tiap skill, jadi tidak perlu
+diaktifkan manual. Isinya antara lain security/bug-bounty, crypto/trading, otomasi, dan
+pembuatan konten.
+
+> Catatan: grup `built-in-skills` dari pack asli **tidak** dipasang karena formatnya untuk
+> platform lain (tidak punya frontmatter). Skill dengan deskripsi > 1024 karakter juga
+> dilewati karena ditolak format standar.
+
+### Memakai skill ini di bot Telegram
+
+Agent bot tidak otomatis mengenal isi `.claude/skills/`. Untuk memasangnya, unggah ke
+akun Anthropic-mu lalu daftarkan ke agent:
+
+```bash
+export ANTHROPIC_API_KEY=sk-ant-...     # atau `ant auth login`
+python upload_skills_to_bot.py          # unggah semua (ratusan — makan kredit & waktu)
+python setup_agent.py                   # pasang skill yang terunggah ke agent
+```
+
+- `upload_skills_to_bot.py` idempoten: skill yang sudah terunggah dilewati
+  (dicatat di `uploaded_skills.json`), jadi aman diulang bila terputus.
+- Ingin sebagian saja? `python upload_skills_to_bot.py nama-skill-1 nama-skill-2`.
+- Aset berat (video/font/gambar) dilewati saat unggah agar paket skill kecil.
+- Hapus skill yang tak terpakai lewat Console (platform.claude.com) bila perlu.
+
 ## Cara kerja
 
 - **`setup_agent.py`** dijalankan sekali. Script ini membuat *Environment* dan *Agent* di

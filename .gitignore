@@ -3,3 +3,4 @@ __pycache__/
 .env
 agent_config.json
 sessions.json
+uploaded_skills.json

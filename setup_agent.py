@@ -55,10 +55,30 @@ SKILLS = [
     {"type": "anthropic", "skill_id": "pdf"},
 ]
 
+# Skill custom hasil upload_skills_to_bot.py (nama -> skill_id).
+MANIFEST_PATH = Path(__file__).with_name("uploaded_skills.json")
+MAX_SKILLS_PER_AGENT = 500  # batas Managed Agents
+
+
+def build_skills() -> list[dict]:
+    skills = list(SKILLS)
+    if MANIFEST_PATH.exists():
+        manifest = json.loads(MANIFEST_PATH.read_text())
+        for skill_id in manifest.values():
+            skills.append({"type": "custom", "skill_id": skill_id, "version": "latest"})
+    if len(skills) > MAX_SKILLS_PER_AGENT:
+        raise SystemExit(
+            f"{len(skills)} skill melebihi batas {MAX_SKILLS_PER_AGENT}/agent. "
+            "Kurangi isi uploaded_skills.json."
+        )
+    return skills
+
 
 def main() -> None:
     load_dotenv()
     client = anthropic.Anthropic()
+    skills = build_skills()
+    print(f"Memasang {len(skills)} skill ke agent.")
 
     config = json.loads(CONFIG_PATH.read_text()) if CONFIG_PATH.exists() else {}
 
@@ -85,7 +105,7 @@ def main() -> None:
             model=MODEL,
             system=SYSTEM_PROMPT,
             tools=TOOLS,
-            skills=SKILLS,
+            skills=skills,
         )
         print(f"Agent dibuat: {agent.id} (versi {agent.version})")
     else:
@@ -96,7 +116,7 @@ def main() -> None:
             model=MODEL,
             system=SYSTEM_PROMPT,
             tools=TOOLS,
-            skills=SKILLS,
+            skills=skills,
         )
         print(f"Agent diperbarui: {agent.id} (versi {agent.version})")
 
