@@ -14,6 +14,7 @@ import json
 import logging
 import os
 import re
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from urllib.parse import urlparse
@@ -158,18 +159,46 @@ def check_once(x_token: str | None = None) -> tuple[list[dict], list[str]]:
     state = load_state()
     x_token = x_token if x_token is not None else os.environ.get("X_BEARER_TOKEN")
     alerts, errors = [], []
+    now = time.time()
 
     sources = [("telegram", c) for c in wl["telegram"]]
-    if x_token:
+    # X memakai kredit per panggilan: dicek lebih jarang, dan berhenti sementara kalau kredit habis.
+    x_due = (
+        bool(x_token)
+        and wl["x"]
+        and now >= state.get("_x_paused_until", 0)
+        and now - state.get("_x_last_check", 0) >= int(wl.get("x_interval_minutes", 60)) * 60
+    )
+    if x_due:
         sources += [("x", u) for u in wl["x"]]
+        state["_x_last_check"] = now
 
+    x_stopped = False
     for kind, name in sources:
+        if kind == "x" and x_stopped:
+            continue
         if not valid_name(name):
             errors.append(f"{kind}:{name} nama tidak valid")
             continue
         key = f"{kind}:{name}"
         try:
             posts = fetch_telegram(name) if kind == "telegram" else fetch_x(name, x_token, state)
+        except requests.HTTPError as e:
+            code = e.response.status_code if e.response is not None else None
+            if kind == "x" and code in (401, 402, 403, 429):
+                pause = {402: 6 * 3600, 429: 15 * 60}.get(code, 3600)
+                state["_x_paused_until"] = now + pause
+                reason = {
+                    401: "token X ditolak (401). Cek X_BEARER_TOKEN",
+                    402: "kredit X API habis (402). Isi kredit di developer.x.com",
+                    403: "paket X API tidak mengizinkan endpoint ini (403)",
+                    429: "batas panggilan X API tercapai (429)",
+                }[code]
+                errors.append(f"x: {reason}. X dijeda {pause // 60} menit.")
+                x_stopped = True
+            else:
+                errors.append(f"{key}: HTTP {code}")
+            continue
         except Exception as e:  # satu sumber gagal tidak menghentikan yang lain
             errors.append(f"{key}: {type(e).__name__}: {str(e)[:120]}")
             continue

@@ -73,3 +73,38 @@ def test_alert_format_has_warning_and_link():
     a = {"post": post("proj", 9, "Claim now, connect wallet").__dict__, "keywords": ["claim"], "risks": ["minta connect wallet"]}
     text = w.format_alert(a)
     assert "WASPADA" in text and "https://t.me/proj/9" in text
+
+
+def test_x_402_pauses_x_and_reports_once(tmp_path, monkeypatch):
+    import requests
+
+    calls = []
+
+    def fetch_x(name, token, state):
+        calls.append(name)
+        resp = requests.Response()
+        resp.status_code = 402
+        raise requests.HTTPError(response=resp)
+
+    monkeypatch.setattr(w, "WATCHLIST", tmp_path / "watchlist.json")
+    monkeypatch.setattr(w, "STATE", tmp_path / "state.json")
+    w.save_watchlist({"interval_minutes": 15, "x_interval_minutes": 60, "telegram": [], "x": ["a", "b"], "keywords": []})
+    monkeypatch.setattr(w, "fetch_x", fetch_x)
+
+    _, errors = w.check_once(x_token="tok")
+    assert calls == ["a"], "akun X berikutnya tidak dicoba setelah 402"
+    assert len(errors) == 1 and "kredit X API habis" in errors[0]
+
+    _, errors = w.check_once(x_token="tok")
+    assert calls == ["a"] and errors == [], "selama jeda X tidak dipanggil dan tidak spam error"
+
+
+def test_x_respects_its_own_interval(tmp_path, monkeypatch):
+    calls = []
+    monkeypatch.setattr(w, "WATCHLIST", tmp_path / "watchlist.json")
+    monkeypatch.setattr(w, "STATE", tmp_path / "state.json")
+    w.save_watchlist({"interval_minutes": 15, "x_interval_minutes": 60, "telegram": [], "x": ["a"], "keywords": []})
+    monkeypatch.setattr(w, "fetch_x", lambda n, t, s: calls.append(n) or [])
+    w.check_once(x_token="tok")
+    w.check_once(x_token="tok")
+    assert calls == ["a"], "X tidak dicek lagi sebelum x_interval_minutes lewat"

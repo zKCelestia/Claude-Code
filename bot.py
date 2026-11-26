@@ -581,6 +581,14 @@ async def run_monitor_once(app: Application, notify_empty_to: int | None = None)
     for err in errors:
         log.warning("Monitor: %s", err)
     targets = [notify_empty_to] if notify_empty_to else sorted(ALLOWED_USER_IDS)
+    # Masalah X (kredit habis, token ditolak) dikabarkan sekali per masa jeda.
+    x_errors = [e for e in errors if e.startswith("x:")]
+    if x_errors and not notify_empty_to:
+        for owner in targets:
+            try:
+                await app.bot.send_message(chat_id=owner, text="⚠️ Pemantau X: " + "; ".join(x_errors))
+            except Exception:
+                log.exception("Gagal kirim info X ke %s", owner)
     for owner in targets:
         for a in alerts:
             try:

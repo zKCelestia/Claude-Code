@@ -63,7 +63,7 @@ Perintah di chat pribadi dengan bot:
 | `/kunci <kata>` / `/kunci` | Tambah kata kunci / lihat daftarnya |
 | `/cekairdrop` | Cek sekarang juga |
 
-- Default dicek tiap 15 menit (`interval_minutes` di `monitor/watchlist.json`).
+- Channel Telegram dicek tiap 15 menit (`interval_minutes`), akun X tiap 60 menit (`x_interval_minutes`), karena X API memotong kredit per panggilan. Kalau kredit X habis (402) atau token ditolak, bot mengabari sekali lalu menjeda X beberapa jam.
 - Sumber baru tidak membanjiri: postingan lama hanya dicatat, alert mulai dari postingan berikutnya.
 - Tiap alert diberi **tanda waspada** kalau isinya mirip scam (connect wallet, claim now, link
   disingkat, domain mirip, minta kirim koin, dan sejenisnya).
