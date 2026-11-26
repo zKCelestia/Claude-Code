@@ -15,35 +15,151 @@
     "Setelah submit, catat di bagian 'log' file ini (atau lapor ke pemilik supaya dicatat)."
   ],
   "markets": {
-    "0x7a17b76f7f1cda20e8bc5a88166c4732e6db39f5": {"owner": "muse", "q": "Wikipedia >=7,275,500 artikel 10 Des", "state": "open"},
-    "0x0d79f61a3cf6c6a83501fcb6abd22eddb4ab6a58": {"owner": "muse", "q": "CPI Jerman (Destatis) Nov prelim", "state": "open"},
-    "0xf640443d15af94932e1a7294c15312f0ad9e1136": {"owner": "muse", "q": "Go 1.27.5", "state": "open"},
-    "0x20dee82eb91956386496658e86ce5696edd09b25": {"owner": "muse", "q": "Valencia Marathon sub-2:03", "state": "open"},
-    "0xfdac0b329c1eeccb338d7acc0ec4b537dcfc58c2": {"owner": "muse", "q": "Aeschi Federal Council", "state": "open"},
-    "0xa96dc716066329d666f3c50e6d8f71c701347296": {"owner": "muse", "q": "ARC-AGI-3 Yi-Chia Chen rank 1", "state": "open"},
-    "0x921e39354e4bfc18251ad1b1c80eec1a3940ab82": {"owner": "muse", "q": "bun-v1.4.6", "state": "open"},
-    "0x3c8a98eb4ebca3156af93bf85c76bb3ac13ab4b0": {"owner": "muse", "q": "Node.js v26.14.0", "state": "open"},
-
-    "0x48c2f4d761be00f8d9342a7de34d54673c506631": {"owner": "claude", "q": "CPI Turki Nov >=30%", "state": "open"},
-    "0x55224cfb33522244ac64f969e5a38a5d4413fc23": {"owner": "claude", "q": "GDP Jepang Q3 revisi kedua", "state": "open"},
-    "0x71917b135a4702a3ae7276acbb2c42509e72ea8c": {"owner": "claude", "q": "PPI China Nov >=6.0%", "state": "open"},
-    "0xecace7b63b2e044dd339e7512cf4360713a8e156": {"owner": "claude", "q": "CPI Swiss Nov >=1.6%", "state": "open"},
-    "0x191257a08df3a827a9a02fa54926ed9507b4497a": {"owner": "claude", "q": "Swiss War Materiel Act", "state": "open"},
-    "0x96fd040517bbf73b2980e700e9a164d6efe672ec": {"owner": "claude", "q": "StatCan unemployment >=6.8%", "state": "open"},
-    "0x6d14f2291c886a3469e988a7f80d307802a40c0a": {"owner": "claude", "q": "BLS NFP Nov", "state": "open"},
-    "0xb50e81264ad92791f9849f7f83e0dbad03a39861": {"owner": "claude", "q": "INEGI CPI Meksiko >=3.80%", "state": "open"},
-    "0x61be752b093bb2ac3b7019360543fa97056eb2b6": {"owner": "claude", "q": "BoC > 2.50%", "state": "open"},
-    "0x169f02be2177934e0d9fbb29c52b1d6d1891026c": {"owner": "claude", "q": "RUU pajak konsumsi pangan Jepang", "state": "open"},
-    "0x94a46dbc0e0a16e7177b792062b3786d94983179": {"owner": "claude", "q": "FOMC dissent Des", "state": "open"},
-    "0x2b7c2f3fc81678be6b7bae7ac24cf5f99b6e0326": {"owner": "claude", "q": "Bundestag PNOG", "state": "open"},
-    "0x10d5075e3fb5b43f3d67205cd89694b97a92d0e1": {"owner": "claude", "q": "ONS GDP Okt >=0.1%", "state": "open"},
-    "0x10f7f232cf20f579ef3929d699e49e8ffd4c1e94": {"owner": "claude", "q": "Prancis 49.3 PLFSS", "state": "open"},
-
-    "0x94dbba7c9b44b788a701602ab6d919ff7b7fc38a": {"owner": "-", "q": "Turnout Swiss >=50%", "state": "closed (duplicate tanpa pengembalian)"},
-    "0xbb2666746de61bb1b119398f4db48a53d64e20cd": {"owner": "-", "q": "Anggaran Korea 2027", "state": "closed (duplicate tanpa pengembalian) - JANGAN kirim Korea fact-3"},
-    "0x55b0fabfcdf6125415854cc193ecd8cdc75bc382": {"owner": "-", "q": "Vox >=60 kursi", "state": "closed (accepted)"},
-    "0xda5d046f5bac4bbfa5abe32bc52787725548d4ee": {"owner": "-", "q": "IETF DISCUSS", "state": "closed (accepted)"},
-    "0x42fdc3fb099766fd01289f215cd399146e1f224e": {"owner": "-", "q": "FIDE Sindarov vs Gukesh", "state": "closed (irrelevant)"}
+    "0x7a17b76f7f1cda20e8bc5a88166c4732e6db39f5": {
+      "owner": "muse",
+      "q": "Wikipedia >=7,275,500 artikel 10 Des",
+      "state": "open"
+    },
+    "0x0d79f61a3cf6c6a83501fcb6abd22eddb4ab6a58": {
+      "owner": "muse",
+      "q": "CPI Jerman (Destatis) Nov prelim",
+      "state": "open"
+    },
+    "0xf640443d15af94932e1a7294c15312f0ad9e1136": {
+      "owner": "muse",
+      "q": "Go 1.27.5",
+      "state": "open"
+    },
+    "0x20dee82eb91956386496658e86ce5696edd09b25": {
+      "owner": "muse",
+      "q": "Valencia Marathon sub-2:03",
+      "state": "open"
+    },
+    "0xfdac0b329c1eeccb338d7acc0ec4b537dcfc58c2": {
+      "owner": "muse",
+      "q": "Aeschi Federal Council",
+      "state": "open"
+    },
+    "0xa96dc716066329d666f3c50e6d8f71c701347296": {
+      "owner": "muse",
+      "q": "ARC-AGI-3 Yi-Chia Chen rank 1",
+      "state": "open"
+    },
+    "0x921e39354e4bfc18251ad1b1c80eec1a3940ab82": {
+      "owner": "muse",
+      "q": "bun-v1.4.6",
+      "state": "open"
+    },
+    "0x3c8a98eb4ebca3156af93bf85c76bb3ac13ab4b0": {
+      "owner": "muse",
+      "q": "Node.js v26.14.0",
+      "state": "open"
+    },
+    "0x48c2f4d761be00f8d9342a7de34d54673c506631": {
+      "owner": "claude",
+      "q": "CPI Turki Nov >=30%",
+      "state": "open"
+    },
+    "0x55224cfb33522244ac64f969e5a38a5d4413fc23": {
+      "owner": "claude",
+      "q": "GDP Jepang Q3 revisi kedua",
+      "state": "open"
+    },
+    "0x71917b135a4702a3ae7276acbb2c42509e72ea8c": {
+      "owner": "claude",
+      "q": "PPI China Nov >=6.0%",
+      "state": "open"
+    },
+    "0xecace7b63b2e044dd339e7512cf4360713a8e156": {
+      "owner": "claude",
+      "q": "CPI Swiss Nov >=1.6%",
+      "state": "open"
+    },
+    "0x191257a08df3a827a9a02fa54926ed9507b4497a": {
+      "owner": "claude",
+      "q": "Swiss War Materiel Act",
+      "state": "open"
+    },
+    "0x96fd040517bbf73b2980e700e9a164d6efe672ec": {
+      "owner": "claude",
+      "q": "StatCan unemployment >=6.8%",
+      "state": "open"
+    },
+    "0x6d14f2291c886a3469e988a7f80d307802a40c0a": {
+      "owner": "claude",
+      "q": "BLS NFP Nov",
+      "state": "open"
+    },
+    "0xb50e81264ad92791f9849f7f83e0dbad03a39861": {
+      "owner": "claude",
+      "q": "INEGI CPI Meksiko >=3.80%",
+      "state": "open"
+    },
+    "0x61be752b093bb2ac3b7019360543fa97056eb2b6": {
+      "owner": "claude",
+      "q": "BoC > 2.50%",
+      "state": "open"
+    },
+    "0x169f02be2177934e0d9fbb29c52b1d6d1891026c": {
+      "owner": "claude",
+      "q": "RUU pajak konsumsi pangan Jepang",
+      "state": "open"
+    },
+    "0x94a46dbc0e0a16e7177b792062b3786d94983179": {
+      "owner": "claude",
+      "q": "FOMC dissent Des",
+      "state": "open"
+    },
+    "0x2b7c2f3fc81678be6b7bae7ac24cf5f99b6e0326": {
+      "owner": "claude",
+      "q": "Bundestag PNOG",
+      "state": "open"
+    },
+    "0x10d5075e3fb5b43f3d67205cd89694b97a92d0e1": {
+      "owner": "claude",
+      "q": "ONS GDP Okt >=0.1%",
+      "state": "open"
+    },
+    "0x10f7f232cf20f579ef3929d699e49e8ffd4c1e94": {
+      "owner": "claude",
+      "q": "Prancis 49.3 PLFSS",
+      "state": "open"
+    },
+    "0x94dbba7c9b44b788a701602ab6d919ff7b7fc38a": {
+      "owner": "-",
+      "q": "Turnout Swiss >=50%",
+      "state": "closed (duplicate tanpa pengembalian)"
+    },
+    "0xbb2666746de61bb1b119398f4db48a53d64e20cd": {
+      "owner": "-",
+      "q": "Anggaran Korea 2027",
+      "state": "closed (duplicate tanpa pengembalian) - JANGAN kirim Korea fact-3"
+    },
+    "0x55b0fabfcdf6125415854cc193ecd8cdc75bc382": {
+      "owner": "-",
+      "q": "Vox >=60 kursi",
+      "state": "closed (accepted)"
+    },
+    "0xda5d046f5bac4bbfa5abe32bc52787725548d4ee": {
+      "owner": "-",
+      "q": "IETF DISCUSS",
+      "state": "closed (accepted)"
+    },
+    "0x42fdc3fb099766fd01289f215cd399146e1f224e": {
+      "owner": "-",
+      "q": "FIDE Sindarov vs Gukesh",
+      "state": "closed (irrelevant)"
+    }
   },
-  "log": []
+  "log": [],
+  "feedback": [
+    {
+      "id": "0d3b1c91-08cc-43a8-b20f-cb4eb42dc171",
+      "sent": "2026-11-26T06:28Z",
+      "by": "muse",
+      "area": "api",
+      "topic": "duplicate-refund quota not exposed",
+      "draft": "delphi/feedback/01-duplicate-refund-quota.json"
+    }
+  ]
 }
