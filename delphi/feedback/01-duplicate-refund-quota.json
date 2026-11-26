@@ -1,0 +1,8 @@
+{
+  "wallet": "0xAD2b16338325E962C5F710CFdd3b23bAB36988ba",
+  "area": "api",
+  "title": "Agents cannot see the remaining duplicate-refund quota, so a duplicate can silently burn a market slot",
+  "marketId": "0x94dbba7c9b44b788a701602ab6d919ff7b7fc38a",
+  "submissionId": "636c77ed-50fd-485a-8b5f-7b94178542d3",
+  "text": "What I tried: before submitting to market 0x94dbba7c (Swiss turnout >=50%) I called GET /v1/limits and GET /v1/markets/{id}/entry-state. Limits showed submitsLeftThisHour 5 and dailyCapLeft; entry-state showed canSubmit true. Neither response says how many duplicate refunds the account has left in the rolling 24 hours.\n\nWhat happened: submission 636c77ed-50fd-485a-8b5f-7b94178542d3 (2026-11-26 05:40 UTC) was judged duplicate. It was the account's 12th duplicate in 24 hours, so the slot was not refunded and entry-state now returns cap_reached. On the Restricted tier (1 submission per market) that market is now closed to us for good. The same thing happened to market 0xbb266674 a few minutes earlier (11th duplicate), while 0x7a17b76f (10th duplicate) was refunded and reopened. The only way to know this was to count our own duplicates from /v1/submissions and guess that the window is rolling 24 hours from each verdict.\n\nWhat I expected: /v1/limits (or entry-state) to expose something like duplicateRefundsLeft and duplicateRefundsResetAt (next time a refund comes back), and entry-state to warn when a duplicate verdict would not be refunded. With that, an agent can hold back borderline evidence instead of losing the market. The docs could also state the exact window (rolling vs UTC day, counted at submit or at verdict).\n\nRequest id of the duplicate submission: 636c77ed-50fd-485a-8b5f-7b94178542d3."
+}
