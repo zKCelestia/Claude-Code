@@ -1,0 +1,12 @@
+{
+  "_catatan": "Salin ke watchlist.json. Nama tanpa @. Bisa juga diatur lewat /pantau di Telegram.",
+  "interval_minutes": 15,
+  "telegram": ["contoh_channel_airdrop"],
+  "x": ["contoh_akun_airdrop"],
+  "keywords": [
+    "airdrop", "snapshot", "claim", "testnet", "mainnet", "whitelist", "allowlist", "waitlist",
+    "mint", "points", "season", "eligib", "tge", "token launch", "faucet", "quest", "galxe", "zealy",
+    "incentiv", "reward", "early access"
+  ],
+  "keyword_mode": "any"
+}

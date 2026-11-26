@@ -18,6 +18,14 @@ yang ID-nya ada di GROUP_CHAT_IDS.
   /status  - siapa terakhir ngomong, siapa yang nggak aktif
   /jewer   - mention anggota yang nggak aktif (pemilik saja)
 
+Pemantau airdrop (lihat monitor/):
+  /pantau                    - daftar yang dipantau
+  /pantau tg <channel>       - tambah channel Telegram publik
+  /pantau x <akun>           - tambah akun X (butuh X_BEARER_TOKEN)
+  /lepas tg|x <nama>         - berhenti memantau
+  /kunci <kata> | /kunci     - tambah kata kunci / lihat daftar
+  /cekairdrop                - cek sekarang
+
 Jalankan setelah setup_agent.py:  python bot.py
 """
 
@@ -37,6 +45,7 @@ from telegram.error import Conflict
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
 
 from group_chat import GroupManager, GroupSettings, Incoming
+from monitor import watcher
 
 BASE_DIR = Path(__file__).parent
 CONFIG_PATH = BASE_DIR / "agent_config.json"
@@ -562,10 +571,118 @@ async def on_error(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
     log.error("Error saat memproses update", exc_info=context.error)
 
 
+# ---------------------------------------------------------------- pemantau airdrop
+monitor_lock = asyncio.Lock()
+
+
+async def run_monitor_once(app: Application, notify_empty_to: int | None = None) -> None:
+    async with monitor_lock:
+        alerts, errors = await asyncio.to_thread(watcher.check_once)
+    for err in errors:
+        log.warning("Monitor: %s", err)
+    targets = [notify_empty_to] if notify_empty_to else sorted(ALLOWED_USER_IDS)
+    for owner in targets:
+        for a in alerts:
+            try:
+                await app.bot.send_message(chat_id=owner, text=watcher.format_alert(a), disable_web_page_preview=True)
+            except Exception:
+                log.exception("Gagal kirim alert ke %s", owner)
+        if notify_empty_to and not alerts:
+            msg = "Nggak ada postingan airdrop baru."
+            if errors:
+                msg += "\nMasalah: " + "; ".join(errors[:5])
+            await app.bot.send_message(chat_id=owner, text=msg)
+
+
+async def monitor_loop(app: Application) -> None:
+    await asyncio.sleep(30)
+    while True:
+        interval = 15
+        try:
+            wl = watcher.load_watchlist()
+            interval = max(5, int(wl.get("interval_minutes", 15)))
+            if (wl["telegram"] or wl["x"]) and ALLOWED_USER_IDS:
+                await run_monitor_once(app)
+        except Exception:
+            log.exception("Monitor error")
+        await asyncio.sleep(interval * 60)
+
+
+async def pantau_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not is_allowed(update):
+        return
+    wl = watcher.load_watchlist()
+    args = context.args
+    if len(args) == 2 and args[0].lower() in ("tg", "x"):
+        kind = "telegram" if args[0].lower() == "tg" else "x"
+        name = args[1].lstrip("@").replace("https://t.me/", "").replace("https://x.com/", "").strip("/")
+        if not watcher.valid_name(name):
+            await update.message.reply_text("Nama nggak valid. Pakai nama channel/akun tanpa @, contoh: /pantau tg namachannel")
+            return
+        if name not in wl[kind]:
+            wl[kind].append(name)
+            watcher.save_watchlist(wl)
+        note = ""
+        if kind == "x" and not os.environ.get("X_BEARER_TOKEN"):
+            note = "\n⚠️ X_BEARER_TOKEN belum diisi di .env, jadi akun X belum dicek."
+        await update.message.reply_text(
+            f"Oke, {kind} @{name} dipantau. Postingan lama dicatat dulu, alert mulai dari postingan berikutnya.{note}"
+        )
+        return
+    x_status = "aktif" if os.environ.get("X_BEARER_TOKEN") else "nonaktif (isi X_BEARER_TOKEN)"
+    tg = ", ".join("@" + n for n in wl["telegram"]) or "-"
+    xs = ", ".join("@" + n for n in wl["x"]) or "-"
+    await update.message.reply_text(
+        f"📡 Pemantau airdrop (tiap {wl['interval_minutes']} menit)\n"
+        f"Telegram: {tg}\nX [{x_status}]: {xs}\nKata kunci: {len(wl['keywords'])} (lihat /kunci)\n\n"
+        "Tambah: /pantau tg <channel> atau /pantau x <akun>"
+    )
+
+
+async def lepas_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not is_allowed(update):
+        return
+    args = context.args
+    if len(args) != 2 or args[0].lower() not in ("tg", "x"):
+        await update.message.reply_text("Format: /lepas tg <channel> atau /lepas x <akun>")
+        return
+    kind = "telegram" if args[0].lower() == "tg" else "x"
+    name = args[1].lstrip("@")
+    wl = watcher.load_watchlist()
+    if name in wl[kind]:
+        wl[kind].remove(name)
+        watcher.save_watchlist(wl)
+        await update.message.reply_text(f"{kind} @{name} nggak dipantau lagi.")
+    else:
+        await update.message.reply_text(f"{kind} @{name} memang nggak ada di daftar.")
+
+
+async def kunci_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not is_allowed(update):
+        return
+    wl = watcher.load_watchlist()
+    word = " ".join(context.args).strip().lower()
+    if word:
+        if word not in wl["keywords"]:
+            wl["keywords"].append(word)
+            watcher.save_watchlist(wl)
+        await update.message.reply_text(f"Kata kunci '{word}' ditambahkan.")
+        return
+    await update.message.reply_text("Kata kunci: " + ", ".join(wl["keywords"]))
+
+
+async def cekairdrop_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not is_allowed(update):
+        return
+    await update.message.reply_text("Ngecek sekarang…")
+    await run_monitor_once(context.application, notify_empty_to=update.effective_chat.id)
+
+
 async def post_init(app: Application) -> None:
     global groups
     app.create_task(autopilot_loop(app))
     app.create_task(watchdog_loop(app))
+    app.create_task(monitor_loop(app))
     if GROUP_CHAT_IDS:
         me = await app.bot.get_me()
 
@@ -590,6 +707,10 @@ def main() -> None:
     app.add_handler(CommandHandler("resume", resume_cmd))
     app.add_handler(CommandHandler("status", status_cmd))
     app.add_handler(CommandHandler("jewer", jewer_cmd))
+    app.add_handler(CommandHandler("pantau", pantau_cmd))
+    app.add_handler(CommandHandler("lepas", lepas_cmd))
+    app.add_handler(CommandHandler("kunci", kunci_cmd))
+    app.add_handler(CommandHandler("cekairdrop", cekairdrop_cmd))
     # Grup: semua pesan teks (termasuk dari bot lain) masuk inbox grup.
     app.add_handler(MessageHandler(filters.ChatType.GROUPS & filters.TEXT & ~filters.COMMAND, handle_group_message))
     # Chat pribadi dengan pemilik: perilaku lama (teks, file, foto).

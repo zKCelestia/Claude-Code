@@ -12,3 +12,7 @@ burner_ledger.json
 
 # delphi: log submission akun (lokal)
 delphi/submissions.jsonl
+
+# monitor (state lokal)
+monitor/watchlist.json
+monitor/state.json

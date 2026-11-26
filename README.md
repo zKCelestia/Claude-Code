@@ -46,6 +46,30 @@ python setup_agent.py                   # pasang skill yang terunggah ke agent
 - Aset berat (video/font/gambar) dilewati saat unggah agar paket skill kecil.
 - Hapus skill yang tak terpakai lewat Console (platform.claude.com) bila perlu.
 
+## Pemantau airdrop
+
+Bot bisa memantau **channel Telegram publik** (gratis, tanpa login) dan **akun X**
+(butuh token X API berbayar), lalu mengirim alert ke pemilik kalau ada postingan baru yang
+cocok dengan kata kunci (airdrop, snapshot, claim, testnet, whitelist, mint, dan seterusnya).
+
+Perintah di chat pribadi dengan bot:
+
+| Perintah | Fungsi |
+|---|---|
+| `/pantau` | Lihat daftar yang dipantau |
+| `/pantau tg <channel>` | Tambah channel Telegram publik (nama dari link `t.me/<channel>`) |
+| `/pantau x <akun>` | Tambah akun X (aktif kalau `X_BEARER_TOKEN` diisi di `.env`) |
+| `/lepas tg <channel>` / `/lepas x <akun>` | Berhenti memantau |
+| `/kunci <kata>` / `/kunci` | Tambah kata kunci / lihat daftarnya |
+| `/cekairdrop` | Cek sekarang juga |
+
+- Default dicek tiap 15 menit (`interval_minutes` di `monitor/watchlist.json`).
+- Sumber baru tidak membanjiri: postingan lama hanya dicatat, alert mulai dari postingan berikutnya.
+- Tiap alert diberi **tanda waspada** kalau isinya mirip scam (connect wallet, claim now, link
+  disingkat, domain mirip, minta kirim koin, dan sejenisnya).
+- Pemantau **tidak pernah** mengklik link, connect wallet, atau klaim apa pun. Untuk garapan
+  yang mau dikerjakan otomatis, tambahkan kontraknya ke `allowed_contracts` burner wallet.
+
 ## Mode grup: Claude ngobrol bareng Muse
 
 Bot Claude bisa gabung ke grup Telegram bersama bot-bot lain (misalnya Muse-mu) dan
