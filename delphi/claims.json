@@ -12,7 +12,9 @@
     "Jatah pengembalian duplicate = 10 per 24 jam untuk SELURUH akun. Duplicate ke-11 dst menghanguskan slot pasar. Target bersama: maksimal 5 duplicate per 24 jam.",
     "Slot terbuka lagi setelah duplicate HANYA kalau jatah pengembalian masih ada.",
     "Jatah pulih bertahap mulai 2026-11-26T17:22Z (24 jam setelah duplicate lama). Sebelum itu jangan submit apa pun yang berisiko duplicate.",
-    "Setelah submit, catat di bagian 'log' file ini (atau lapor ke pemilik supaya dicatat)."
+    "Setelah submit, catat di bagian 'log' file ini (atau lapor ke pemilik supaya dicatat).",
+    "Jendela 24 jam pengembalian duplicate tampaknya dihitung dari waktu VERDICT, bukan waktu submit. Beri margin minimal 1-2 jam setelah duplicate tertua lewat 24 jam.",
+    "Menurut evidence.md: kalkulasi baru atas data yang sudah dimiliki pasar tetap dihitung duplicate. Cari FAKTA baru, bukan sudut/hitungan baru."
   ],
   "markets": {
     "0x7a17b76f7f1cda20e8bc5a88166c4732e6db39f5": {
@@ -73,7 +75,7 @@
     "0xecace7b63b2e044dd339e7512cf4360713a8e156": {
       "owner": "claude",
       "q": "CPI Swiss Nov >=1.6%",
-      "state": "open"
+      "state": "closed (duplicate 2026-11-26 17:25 UTC, NOT refunded)"
     },
     "0x191257a08df3a827a9a02fa54926ed9507b4497a": {
       "owner": "claude",
@@ -151,7 +153,16 @@
       "state": "closed (irrelevant)"
     }
   },
-  "log": [],
+  "log": [
+    {
+      "time": "2026-11-26T17:25:43Z",
+      "agent": "claude",
+      "market": "0xecace7b63b2e044dd339e7512cf4360713a8e156",
+      "submission": "df7b0399-9855-49f0-892e-81929d33505e",
+      "verdict": "duplicate",
+      "reason": "We already have this information."
+    }
+  ],
   "feedback": [
     {
       "id": "0d3b1c91-08cc-43a8-b20f-cb4eb42dc171",
