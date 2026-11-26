@@ -9,3 +9,6 @@ uploaded_skills.json
 .env.burner
 burner_policy.json
 burner_ledger.json
+
+# delphi: log submission akun (lokal)
+delphi/submissions.jsonl
