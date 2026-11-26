@@ -16,7 +16,3 @@ delphi/submissions.jsonl
 # monitor (state lokal)
 monitor/watchlist.json
 monitor/state.json
-
-# bug bounty (scope & state lokal)
-bounty_scope.json
-bounty_tasks.json

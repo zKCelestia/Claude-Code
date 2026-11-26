@@ -156,68 +156,6 @@ Bot Muse gratis, tapi setiap giliran Claude memakai kredit API. Pantau pemakaian
 | `/status` | Papan status: siapa terakhir ngomong, kapan, siapa yang nggak aktif, sisa budget giliran |
 | `/jewer` | Mention anggota yang nggak aktif supaya ikut ngobrol lagi (pemilik saja) |
 
-## Mode bug bounty: Asa ngasih info, Liz yang garap
-
-Asa (bot Muse) mengirim tugas ke grup dengan format `#BOUNTY`. Bot mengecek target ke
-scope resmi yang kamu isi sendiri. Setelah kamu setujui, agent bounty (Liz) menggarapnya
-di sandbox yang **cuma bisa menjangkau host target**.
-
-### Menyiapkan
-
-1. Salin `bounty/scope.example.json` ke `bounty_scope.json` (tidak di-commit), lalu isi tiap
-   program **persis** dari halaman scope resminya (HackerOne, Bugcrowd, Intigriti, Immunefi, VDP, dll.):
-   `in_scope`, `out_of_scope`, `rules`, `max_rps`. `*.domain.com` = semua subdomain, tidak
-   termasuk `domain.com` sendiri. Set `"active": true`.
-2. Jalankan `python setup_agent.py` sekali lagi untuk membuat agent bounty (`bounty_agent_id`).
-3. Restart bot. Pastikan `ALLOWED_USER_IDS` terisi (hanya pemilik yang bisa `/garap`), dan
-   kamu sudah pernah `/start` bot di chat pribadi supaya laporan bisa dikirim ke DM.
-
-### Format tugas (tempel ini ke instruksi Asa)
-
-```
-Kalau kamu menemukan kandidat bug bounty untuk Liz, kirim satu pesan ke grup dengan format:
-#BOUNTY
-program: <nama program persis seperti di bounty_scope.json>
-target: <URL atau host, boleh lebih dari satu dipisah koma>
-tes: <apa yang perlu dicek dan kenapa kamu curiga>
-catatan: <info tambahan: akun tes, endpoint, referensi>
-Satu pesan = satu tugas. Jangan kirim target di luar scope program.
-```
-
-### Alurnya
-
-1. Asa mengirim `#BOUNTY`. Bot langsung membalas: ✅ in-scope dengan ID tugas (mis. `B3`),
-   atau 🚫 ditolak beserta alasannya (program tidak terdaftar, host out-of-scope, alamat IP, dll.).
-   Satu target saja yang gagal sudah cukup membuat seluruh tugas ditolak.
-2. Kamu ketik `/garap B3`. Scope dicek ulang, lalu Liz mulai.
-3. Liz selesai: ringkasan pendek dikirim ke grup (Asa bisa membacanya), sedangkan laporan lengkap
-   (`laporan_B3.md`) dikirim ke **DM pemilik** supaya detail celah tidak tersebar.
-4. Kamu sendiri yang mengirim laporan ke platform. Liz tidak pernah submit.
-
-| Perintah | Fungsi |
-|---|---|
-| `/tugas` | Daftar tugas bounty dan statusnya |
-| `/garap <id>` | Setujui dan jalankan tugas (pemilik saja) |
-| `/tolak <id>` | Batalkan tugas yang menunggu (pemilik saja) |
-| `/hentikan <id>` | Hentikan tugas yang sedang jalan (pemilik saja) |
-
-### Rem dan pengaman
-
-| Variabel | Default | Arti |
-|---|---|---|
-| `BOUNTY_BUDGET_USD` | 5 | Batas biaya per tugas (session budget, ditegakkan platform) |
-| `BOUNTY_MAX_MINUTES` | 45 | Lewat dari ini, tugas di-interrupt otomatis |
-| `BOUNTY_MAX_TASKS_PER_DAY` | 5 | Maks tugas yang dijalankan per 24 jam |
-
-- **Scope dikunci di jaringan**, bukan cuma di prompt: tiap set host punya environment sendiri
-  dengan `networking: limited` dan `allowed_hosts` persis host yang lolos scope (plus registry paket).
-- Agent bounty terpisah dari agent chat: tidak punya tool burner, `web_fetch`, maupun `web_search`.
-- Pesan Asa/bot lain tidak bisa menyetujui tugas atau menambah scope. Obrolan grup biasa juga
-  tidak bisa menjangkau target, karena environment chat tidak membuka host itu.
-- Hanya satu tugas jalan pada satu waktu. Tugas yang sedang jalan saat bot restart ditandai gagal.
-- `max_rps` dan aturan program disampaikan ke agent lewat prompt; sandbox tidak membatasi
-  kecepatan request secara teknis. Pilih fokus tes yang tidak berat.
-
 ## Burner wallet (garapan otomatis)
 
 Bot bisa memakai **burner wallet** EVM + Solana bersaldo kecil untuk mint dan tugas

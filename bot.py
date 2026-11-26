@@ -26,14 +26,6 @@ Pemantau airdrop (lihat monitor/):
   /kunci <kata> | /kunci     - tambah kata kunci / lihat daftar
   /cekairdrop                - cek sekarang
 
-Mode bug bounty (lihat bounty/): Asa/Muse kirim tugas berformat #BOUNTY,
-bot cek scope (bounty_scope.json), pemilik setujui, lalu agent bounty menggarap
-di sandbox yang hanya bisa menjangkau host target.
-  /tugas            - daftar tugas bounty
-  /garap <id>       - setujui & jalankan tugas (pemilik saja)
-  /tolak <id>       - batalkan tugas (pemilik saja)
-  /hentikan <id>    - hentikan tugas yang sedang jalan (pemilik saja)
-
 Jalankan setelah setup_agent.py:  python bot.py
 """
 
@@ -52,9 +44,6 @@ from telegram.constants import ChatAction
 from telegram.error import Conflict
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
 
-from bounty import runner as bounty_runner
-from bounty.scope import Scope, ScopeError
-from bounty.tasks import TaskBoard, has_tag, parse_task
 from group_chat import GroupManager, GroupSettings, Incoming
 from monitor import watcher
 
@@ -346,10 +335,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         await update.message.reply_text("Maaf, kamu tidak punya akses ke bot ini.")
         return
 
-    if update.message.text and has_tag(update.message.text):
-        await handle_bounty_post(update, context)
-        return
-
     chat_id = update.effective_chat.id
     lock = chat_locks.setdefault(chat_id, asyncio.Lock())
     stop_typing = asyncio.Event()
@@ -515,9 +500,6 @@ async def handle_group_message(update: Update, context: ContextTypes.DEFAULT_TYP
     if chat.id not in GROUP_CHAT_IDS:
         return
     user = msg.from_user
-    if user.id != groups.me_id and has_tag(msg.text):
-        await handle_bounty_post(update, context)
-        return
     groups.receive(
         chat.id,
         chat.title or "",
@@ -556,190 +538,6 @@ async def jewer_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.effective_message.reply_text(
         " ".join(names) + " 👋 kalian ke mana? Ayo ikut ngobrol lagi, kasih update terbaru kalian."
     )
-
-
-# ---------------------------------------------------------------- mode bug bounty
-bounty_board = TaskBoard()
-bounty_interrupts: dict[str, str] = {}  # task_id -> session_id yang sedang jalan
-
-
-def bounty_agent_id() -> str | None:
-    return CONFIG.get("bounty_agent_id")
-
-
-async def handle_bounty_post(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Pesan #BOUNTY dari Asa/Muse atau pemilik: parse, cek scope, tunggu /garap."""
-    msg = update.effective_message
-    user = msg.from_user
-    name = user.full_name or user.username or str(user.id)
-    try:
-        info = parse_task(msg.text)
-        scope = Scope.load()
-        hosts = scope.check(info["program"], info["targets"])
-    except (ValueError, ScopeError) as e:
-        await msg.reply_text(f"🚫 Tugas bounty ditolak: {e}")
-        return
-    except Exception:
-        log.exception("Gagal memproses tugas bounty")
-        await msg.reply_text("🚫 Tugas bounty gagal diproses (cek log bot).")
-        return
-    try:
-        task = bounty_board.add(
-            program=info["program"].lower(),
-            hosts=hosts,
-            targets=info["targets"],
-            focus=info["focus"],
-            notes=info["notes"],
-            source=name,
-            source_is_bot=bool(user.is_bot),
-            chat_id=update.effective_chat.id,
-        )
-    except ValueError as e:
-        await msg.reply_text(f"🚫 {e}")
-        return
-    await msg.reply_text(
-        f"📥 Tugas {task.id} dari {name} ✅ in-scope ({task.program})\n"
-        f"Host: {', '.join(task.hosts)}\nFokus: {task.focus[:300]}\n\n"
-        f"Bos, ketik /garap {task.id} buat mulai, atau /tolak {task.id}."
-    )
-
-
-async def tugas_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    if not is_allowed(update) and update.effective_chat.id not in GROUP_CHAT_IDS:
-        return
-    tasks = bounty_board.recent(10)
-    if not tasks:
-        await update.effective_message.reply_text("Belum ada tugas bounty. Format tugas: lihat README (#BOUNTY).")
-        return
-    icon = {"menunggu": "⏳", "jalan": "🔧", "selesai": "✅", "gagal": "⚠️", "ditolak": "🚫", "batal": "🗑", "dihentikan": "⏹"}
-    rows = [
-        f"{icon.get(t.status, '•')} {t.id} [{t.status}] {t.program}: {', '.join(t.hosts)}\n   {t.focus[:80]}"
-        for t in tasks
-    ]
-    footer = f"\nDijalankan 24 jam terakhir: {bounty_board.started_last_24h()}/{bounty_runner.max_per_day()}"
-    await update.effective_message.reply_text("🎯 Tugas bounty\n\n" + "\n".join(rows) + footer)
-
-
-async def tolak_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    if not is_allowed(update):
-        return
-    task = bounty_board.get(context.args[0] if context.args else "")
-    if task is None or task.status != "menunggu":
-        await update.effective_message.reply_text("Tugas nggak ketemu atau sudah nggak menunggu. Cek /tugas.")
-        return
-    task.status = "batal"
-    bounty_board.save()
-    await update.effective_message.reply_text(f"🗑 Tugas {task.id} dibatalkan.")
-
-
-async def hentikan_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    if not is_allowed(update):
-        return
-    task_id = (context.args[0] if context.args else "").upper()
-    session_id = bounty_interrupts.get(task_id)
-    if not session_id:
-        await update.effective_message.reply_text("Tugas itu nggak sedang jalan.")
-        return
-    task = bounty_board.get(task_id)
-    if task:
-        task.status = "dihentikan"
-        bounty_board.save()
-    await asyncio.to_thread(send_interrupt, session_id)
-    await update.effective_message.reply_text(f"⏹ Minta {task_id} berhenti. Laporan sementara dikirim kalau ada.")
-
-
-def send_interrupt(session_id: str) -> None:
-    try:
-        client.beta.sessions.events.send(session_id=session_id, events=[{"type": "user.interrupt"}])
-    except Exception:
-        log.exception("Gagal mengirim interrupt ke %s", session_id)
-
-
-async def garap_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    if not is_allowed(update) or not ALLOWED_USER_IDS:
-        return  # persetujuan hanya dari pemilik yang terdaftar
-    reply = update.effective_message.reply_text
-    task = bounty_board.get(context.args[0] if context.args else "")
-    if task is None or task.status != "menunggu":
-        await reply("Tugas nggak ketemu atau sudah nggak menunggu. Cek /tugas.")
-        return
-    if not bounty_agent_id():
-        await reply("Agent bounty belum dibuat. Jalankan: python setup_agent.py, lalu restart bot.")
-        return
-    # Scope dicek ulang: bisa saja bounty_scope.json berubah sejak tugas masuk.
-    try:
-        program = Scope.load().program(task.program)
-        Scope.load().check(task.program, task.hosts)
-    except ScopeError as e:
-        task.status, task.result = "ditolak", str(e)
-        bounty_board.save()
-        await reply(f"🚫 {task.id} ditolak saat cek ulang scope: {e}")
-        return
-    if bounty_board.running():
-        await reply(f"Masih ada tugas jalan ({bounty_board.running()[0].id}). Satu-satu ya, bos.")
-        return
-    if bounty_board.started_last_24h() >= bounty_runner.max_per_day():
-        await reply(f"Batas {bounty_runner.max_per_day()} tugas/24 jam tercapai (BOUNTY_MAX_TASKS_PER_DAY).")
-        return
-    task.status, task.started_at = "jalan", time.time()
-    bounty_board.save()
-    await reply(
-        f"🔧 Liz mulai garap {task.id} ({task.program}). Budget ${int(bounty_runner.budget_cents()) / 100:.2f}, "
-        f"maks {bounty_runner.max_minutes()} menit. /hentikan {task.id} buat stop."
-    )
-    context.application.create_task(run_bounty(context.application, task, program, update.effective_chat.id))
-
-
-async def run_bounty(app: Application, task, program: dict, chat_id: int) -> None:
-    key = f"bounty:{task.id}"
-    summary, outputs = "", []
-    timer = None
-    try:
-        env_id = await asyncio.to_thread(bounty_runner.environment_for, client, bounty_board, task.hosts)
-        session_id = await asyncio.to_thread(
-            bounty_runner.create_session, client, bounty_agent_id(), env_id, task
-        )
-        task.session_id = session_id
-        sessions[key] = {"session_id": session_id, "sent_files": []}
-        save_sessions()
-        bounty_interrupts[task.id] = session_id
-        loop = asyncio.get_running_loop()
-        timer = loop.call_later(
-            bounty_runner.max_minutes() * 60,
-            lambda: loop.create_task(asyncio.to_thread(send_interrupt, session_id)),
-        )
-        prompt = bounty_runner.build_prompt(task, program)
-        summary, wrote, _ = await asyncio.to_thread(run_turn, session_id, prompt, False)
-        outputs = await asyncio.to_thread(collect_new_outputs, key, session_id, True)
-        if task.status == "jalan":
-            task.status = "selesai"
-    except Exception as e:
-        log.exception("Tugas bounty %s gagal", task.id)
-        task.status = "gagal"
-        summary = f"Tugas gagal: {type(e).__name__}: {e}"
-    finally:
-        if timer:
-            timer.cancel()
-        bounty_interrupts.pop(task.id, None)
-        task.finished_at = time.time()
-        task.result = summary[:2000]
-        bounty_board.save()
-
-    head = {"selesai": "✅", "dihentikan": "⏹"}.get(task.status, "⚠️")
-    text = f"{head} Bounty {task.id} {task.status} ({task.program})\n\n{summary}"
-    for chunk in split_message(text):
-        await app.bot.send_message(chat_id=chat_id, text=chunk)
-    # Laporan lengkap ke DM pemilik (detail celah jangan tersebar); grup hanya ringkasan.
-    for filename, data in outputs:
-        delivered = False
-        for owner in ALLOWED_USER_IDS:
-            try:
-                await app.bot.send_document(chat_id=owner, document=data, filename=filename)
-                delivered = True
-            except Exception:
-                log.warning("Gagal kirim laporan %s ke DM %s", filename, owner)
-        note = "dikirim ke DM bos" if delivered else "gagal dikirim ke DM; /start bot di chat pribadi dulu"
-        await app.bot.send_message(chat_id=chat_id, text=f"📄 {filename}: {note}.")
 
 
 # ---------------------------------------------------------------- watchdog
@@ -921,10 +719,6 @@ def main() -> None:
     app.add_handler(CommandHandler("lepas", lepas_cmd))
     app.add_handler(CommandHandler("kunci", kunci_cmd))
     app.add_handler(CommandHandler("cekairdrop", cekairdrop_cmd))
-    app.add_handler(CommandHandler("tugas", tugas_cmd))
-    app.add_handler(CommandHandler("garap", garap_cmd))
-    app.add_handler(CommandHandler("tolak", tolak_cmd))
-    app.add_handler(CommandHandler("hentikan", hentikan_cmd))
     # Grup: semua pesan teks (termasuk dari bot lain) masuk inbox grup.
     app.add_handler(MessageHandler(filters.ChatType.GROUPS & filters.TEXT & ~filters.COMMAND, handle_group_message))
     # Chat pribadi dengan pemilik: perilaku lama (teks, file, foto).
