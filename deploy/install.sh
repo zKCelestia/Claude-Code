@@ -36,7 +36,7 @@ check_env() {
   [ ${#missing[@]} -eq 0 ] || die "Isi dulu di $APP_DIR/.env: ${missing[*]}"
 }
 
-install() {
+do_install() {
   say "Paket sistem (python3, venv, git)"
   export DEBIAN_FRONTEND=noninteractive
   apt-get update -y >/dev/null
@@ -47,7 +47,7 @@ install() {
 
   if [ ! -f "$APP_DIR/.env" ]; then
     say "Membuat .env dari .env.example (izin 600)"
-    install -m 600 -o "$RUN_USER" "$APP_DIR/.env.example" "$APP_DIR/.env"
+    command install -m 600 -o "$RUN_USER" "$APP_DIR/.env.example" "$APP_DIR/.env"
   else
     chmod 600 "$APP_DIR/.env"
   fi
@@ -87,7 +87,7 @@ EOF
 EOF
 }
 
-start() {
+do_start() {
   check_env
   if [ ! -f "$APP_DIR/agent_config.json" ]; then
     say "Membuat agent Claude (sekali saja)"
@@ -108,7 +108,7 @@ start() {
   fi
 }
 
-update() {
+do_update() {
   say "Ambil kode terbaru"
   as_app_user "cd '$APP_DIR' && git pull --ff-only"
   as_app_user "cd '$APP_DIR' && .venv/bin/pip install -q -r requirements.txt"
@@ -121,9 +121,9 @@ update() {
 }
 
 case "$CMD" in
-  install) install ;;
-  start) start ;;
-  update) update ;;
+  install) do_install ;;
+  start) do_start ;;
+  update) do_update ;;
   restart) systemctl restart "$SERVICE"; systemctl --no-pager status "$SERVICE" | head -5 ;;
   stop) systemctl stop "$SERVICE"; say "Bot dimatikan." ;;
   status) systemctl --no-pager status "$SERVICE" | head -15 ;;
