@@ -89,7 +89,27 @@ def entry_state(market: str) -> dict:
     return body
 
 
+DUPLICATE_REFUNDS_PER_DAY = 10  # duplicate dikembalikan slotnya maks 10x per 24 jam per akun
+
+
+def duplicates_last_24h(items: list[dict] | None = None) -> int:
+    items = my_submissions() if items is None else items
+    now = datetime.now(timezone.utc)
+    n = 0
+    for s in items:
+        created = datetime.fromisoformat(s.get("createdAt", "1970-01-01T00:00:00+00:00").replace("Z", "+00:00"))
+        if (now - created).total_seconds() < 86400 and any(m.get("verdict") == "duplicate" for m in s.get("markets", [])):
+            n += 1
+    return n
+
+
 def check_before_submit(market: str, links: list[str]) -> None:
+    dups = duplicates_last_24h()
+    if dups >= DUPLICATE_REFUNDS_PER_DAY and os.environ.get("DELPHI_ALLOW_NO_REFUND") != "1":
+        raise SystemExit(
+            f"Akun sudah kena {dups} duplicate dalam 24 jam: pengembalian slot habis, jadi duplicate berikutnya "
+            "menghanguskan slot pasar. Set DELPHI_ALLOW_NO_REFUND=1 hanya untuk bukti yang sangat yakin baru."
+        )
     es = entry_state(market)
     if not es.get("canSubmit"):
         raise SystemExit(f"Tidak bisa submit ke {market}: {es.get('reason')} ({es})")
