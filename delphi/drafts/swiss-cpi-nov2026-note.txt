@@ -1,0 +1,29 @@
+Claim: The November 2026 Swiss CPI (FSO release 2 Dec) is likely to show YoY inflation of about 1.3%, BELOW 1.6%. The reason is the sharp fall in heating oil and fuel prices during the exact weeks the FSO collects them in November.
+
+1) What the FSO measures and when (FSO LIK factsheet, https://dam-api.bfs.admin.ch/hub/api/dam/assets/35748322/master): prices are collected in the first two weeks of the month, except heating oil and fuels, which are collected in the 1st and 3rd week of the month. The November index therefore uses heating oil and fuel prices from about 2-6 Nov and 16-20 Nov 2026.
+
+2) Threshold, from the FSO detailed index table published 3 Nov 2026 (LIK25B25, https://dam-api.bfs.admin.ch/hub/api/dam/assets/36970582/master): Nov 2025 index = 100.013, Oct 2025 = 100.223, Oct 2026 = 101.682 (Dec 2025 = 100). Oct 2026 YoY unrounded = +1.46%. For a published Nov 2026 rate of 1.6% or more, the unrounded rate must be at least 1.55%, so the Nov 2026 index must be at least 100.013 x 1.0155 = 101.563. That means the month-on-month change must be -0.12% or better. Last November (2025) it was -0.21% (hotels -7.1%, package holidays -3.4%), while heating oil rose 4.5% that month.
+
+3) Heating oil in the collection weeks (HEV Schweiz weekly reference prices, 3001-6000 l, CHF per 100 l, https://www.hev-schweiz.ch/vermieten/nebenkostenabrechnungen/heizoelpreise/):
+- October collection weeks: 6 Oct 173.00, 20 Oct 183.80 (average 178.40)
+- November collection weeks: 3 Nov 177.40, 17 Nov 152.60 (average 165.00)
+- Change: -7.5%. Latest: 24 Nov 140.00.
+This series tracks the FSO's own heating oil index closely: Sep 2026 HEV +8.2% vs FSO +8.2%, Oct 2026 HEV +10.5% vs FSO +9.8%. The FSO October average price was 168.68 CHF (FSO energy price table, https://dam-api.bfs.admin.ch/hub/api/dam/assets/36970598/master).
+
+4) Fuel in the collection weeks (TCS national averages, reported by AWP on cash.ch):
+- 6 Nov 2026: petrol 95 at 1.99 CHF (down from 2.11 a week earlier), diesel at 2.34 (from 2.40). https://www.cash.ch/news/benzinpreis-in-der-schweiz-sinkt-wieder-unter-2-franken-983271
+- 24 Nov 2026: petrol 95 at 1.83, diesel at 2.23, each 6 centimes lower than about a week earlier (so about 1.89 and 2.29 around 18 Nov). https://www.cash.ch/news/benzinpreise-in-der-schweiz-sinken-weiter-987819
+- FSO October averages: petrol 95 at 2.12, diesel at 2.41.
+- November collection-week averages are therefore about 1.96 for petrol (-7.5%) and about 2.33 for diesel (-3.5%).
+
+5) Effect on the index (FSO 2026 basket weights, https://dam-api.bfs.admin.ch/hub/api/dam/assets/36453530/master: heating oil 0.419%, petrol 1.15%, diesel 0.53%, housing rental 18.877%; the October contribution table confirms these effective weights):
+- Heating oil: 183.736 x -7.5% x 0.00415 = -0.058 index points
+- Petrol: 126.079 x -7.5% x 0.0115 = -0.109
+- Diesel: 133.382 x -3.5% x 0.0053 = -0.025
+- Energy and fuels together: about -0.19 points, a range of about -0.15 to -0.23. In November 2025 the same items added about +0.03.
+
+6) Other items. November is a quarterly rent month. If rents rise +0.43% as in Aug 2026, they add about +0.08 points (vs +0.04 in Nov 2025). If hotels and package holidays repeat Nov 2025 (-0.23 points) and the remaining items repeat their Nov 2025 residual (-0.06), the November index is about 101.682 - 0.19 + 0.08 - 0.23 - 0.06 = 101.29. That is YoY of about +1.28%, published as 1.3%.
+
+To reach the 101.563 needed for 1.6%, non-energy prices would have to be about 0.27 index points stronger than last November, on top of the energy drop.
+
+Limitations: the HEV series covers Kanton Zurich, not the FSO national sample. The exact TCS prices on the FSO collection days are interpolated from the weekly TCS reports. The rent and hotel figures for Nov 2026 are assumptions based on recent quarters and last November. A full calculation table with every input and its source is attached as CSV.

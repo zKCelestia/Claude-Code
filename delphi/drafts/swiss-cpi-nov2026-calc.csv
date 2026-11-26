@@ -1,0 +1,46 @@
+section,item,period,value,unit,source
+BFS LIK detail table,Total index,2025-10,100.223,index Dec2025=100,https://dam-api.bfs.admin.ch/hub/api/dam/assets/36970582/master (LIK25B25 published 2026-11-03)
+BFS LIK detail table,Total index,2025-11,100.013,index Dec2025=100,same
+BFS LIK detail table,Total index,2026-10,101.682,index Dec2025=100,same
+BFS LIK detail table,Heating oil index,2026-10,183.736,index Dec2025=100,same
+BFS LIK detail table,Petrol index,2026-10,126.079,index Dec2025=100,same
+BFS LIK detail table,Diesel index,2026-10,133.382,index Dec2025=100,same
+BFS LIK detail table,Contribution heating oil,2026-10,0.068,index points,same (CONTR_m)
+BFS LIK detail table,Contribution petrol,2026-10,0.067,index points,same (CONTR_m)
+BFS LIK detail table,Contribution diesel,2026-10,0.040,index points,same (CONTR_m)
+BFS LIK detail table,Rent (Wohnungsmiete) m/m,2025-11,+0.2,%,same
+BFS LIK detail table,Rent (Wohnungsmiete) m/m,2026-08,+0.4,%,same (quarterly: Feb/May/Aug/Nov)
+BFS LIK detail table,Hotels m/m,2025-11,-7.1,%,same
+BFS LIK detail table,Package holidays m/m,2025-11,-3.4,%,same
+BFS LIK detail table,Heating oil m/m,2025-11,+4.5,%,same
+BFS LIK detail table,Fuel m/m,2025-11,+0.4,%,same
+BFS weights 2026,Heating oil,2026,0.419,% of basket,https://dam-api.bfs.admin.ch/hub/api/dam/assets/36453530/master (sheet LIK2025)
+BFS weights 2026,Petrol,2026,1.15,% of basket,same
+BFS weights 2026,Diesel,2026,0.53,% of basket,same
+BFS weights 2026,Housing rental,2026,18.877,% of basket,same
+BFS method,Heating oil and fuel collection weeks,current,1st and 3rd week of month,-,https://dam-api.bfs.admin.ch/hub/api/dam/assets/35748322/master (LIK Steckbrief)
+BFS avg prices,Heating oil 3001-6000 l,2026-10,168.68,CHF/100 l,https://dam-api.bfs.admin.ch/hub/api/dam/assets/36970598/master
+BFS avg prices,Petrol 95,2026-10,2.12,CHF/l,same
+BFS avg prices,Diesel,2026-10,2.41,CHF/l,same
+HEV Schweiz weekly,Heating oil 3001-6000 l (Kanton Zurich),2026-10-06,173.00,CHF/100 l,https://www.hev-schweiz.ch/vermieten/nebenkostenabrechnungen/heizoelpreise/
+HEV Schweiz weekly,Heating oil 3001-6000 l (Kanton Zurich),2026-10-20,183.80,CHF/100 l,same
+HEV Schweiz weekly,Heating oil 3001-6000 l (Kanton Zurich),2026-11-03,177.40,CHF/100 l,same
+HEV Schweiz weekly,Heating oil 3001-6000 l (Kanton Zurich),2026-11-17,152.60,CHF/100 l,same
+HEV Schweiz weekly,Heating oil 3001-6000 l (Kanton Zurich),2026-11-24,140.00,CHF/100 l,same
+TCS via AWP (cash.ch),Petrol 95 national avg,2026-11-06,1.99,CHF/l,https://www.cash.ch/news/benzinpreis-in-der-schweiz-sinkt-wieder-unter-2-franken-983271 (week before: 2.11)
+TCS via AWP (cash.ch),Diesel national avg,2026-11-06,2.34,CHF/l,same (week before: 2.40)
+TCS via AWP (cash.ch),Petrol 95 national avg,2026-11-24,1.83,CHF/l,https://www.cash.ch/news/benzinpreise-in-der-schweiz-sinken-weiter-987819 (6 Rp lower than ~1 week earlier: ~1.89)
+TCS via AWP (cash.ch),Diesel national avg,2026-11-24,2.23,CHF/l,same (~2.29 one week earlier)
+estimate,Heating oil Nov vs Oct (1st+3rd week avg of HEV series),2026-11,-7.5,%,(177.40+152.60)/(173.00+183.80)-1; past months track BFS within ~2-3 pp
+estimate,Petrol Nov avg vs BFS Oct 2.12,2026-11,-7.5,%,(~2.03 wk1 + ~1.89 wk3)/2 vs 2.12
+estimate,Diesel Nov avg vs BFS Oct 2.41,2026-11,-3.5,%,(~2.36 wk1 + ~2.29 wk3)/2 vs 2.41
+estimate,Contribution heating oil,2026-11,-0.058,index points,183.736*-0.075*0.00415
+estimate,Contribution petrol,2026-11,-0.109,index points,126.079*-0.075*0.0115
+estimate,Contribution diesel,2026-11,-0.025,index points,133.382*-0.035*0.0053
+estimate,Energy+fuel total,2026-11,-0.19,index points,range about -0.15 to -0.23
+estimate,Rent (if +0.43% like Aug 2026),2026-11,+0.081,index points,vs +0.042 in Nov 2025
+estimate,Hotels+package holidays (if same as Nov 2025),2026-11,-0.227,index points,Nov 2025 actual
+estimate,Other items (as Nov 2025 residual),2026-11,-0.056,index points,Nov 2025 total -0.210 minus listed items
+estimate,Nov 2026 total index,2026-11,101.29,index Dec2025=100,101.682-0.19+0.081-0.227-0.056
+estimate,Nov 2026 YoY,2026-11,1.28,%,101.29/100.013-1
+threshold,Index needed for published YoY >= 1.6% (unrounded >= 1.55%),2026-11,101.563,index Dec2025=100,100.013*1.0155 -> needs m/m >= -0.12%
