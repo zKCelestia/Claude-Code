@@ -46,6 +46,38 @@ python setup_agent.py                   # pasang skill yang terunggah ke agent
 - Aset berat (video/font/gambar) dilewati saat unggah agar paket skill kecil.
 - Hapus skill yang tak terpakai lewat Console (platform.claude.com) bila perlu.
 
+## Jalan 24/7 di VPS
+
+Untuk VPS Ubuntu/Debian (RAM 1 GB cukup). Bot dipasang sebagai service `systemd` bernama
+`lizbot`: nyala sendiri saat VPS boot, dan restart otomatis kalau crash atau dimatikan watchdog.
+
+```bash
+# di VPS
+git clone -b claude/sleepy-davinci-cgquwx https://github.com/zKCelestia/Claude-Code.git
+cd Claude-Code
+sudo bash deploy/install.sh          # paket, venv, .env (izin 600), service
+nano .env                            # isi ANTHROPIC_API_KEY, TELEGRAM_BOT_TOKEN, ALLOWED_USER_IDS
+sudo bash deploy/install.sh start    # buat agent (sekali) lalu nyalakan bot
+```
+
+Kalau repo-nya private, `git clone` akan minta login GitHub (pakai personal access token).
+
+| Perintah | Fungsi |
+|---|---|
+| `sudo bash deploy/install.sh status` | Cek bot jalan atau tidak |
+| `sudo bash deploy/install.sh logs` | Lihat log langsung (Ctrl+C untuk keluar) |
+| `sudo bash deploy/install.sh restart` | Restart bot (mis. setelah mengubah `.env`) |
+| `sudo bash deploy/install.sh update` | Tarik kode terbaru, perbarui agent, restart |
+| `sudo bash deploy/install.sh stop` | Matikan bot |
+
+Catatan:
+
+- Bot jalan sebagai pemilik folder repo. Clone sebagai user biasa (bukan root) supaya lebih aman.
+- Jangan jalankan bot dengan token yang sama di dua tempat sekaligus (laptop dan VPS):
+  Telegram membalas 409 Conflict dan salah satunya berhenti menerima pesan.
+- Burner wallet di VPS: jalankan `python -m burner.create_wallets` dan siapkan
+  `burner_policy.json` di folder repo, lalu `restart`. Backup `.env.burner` di tempat aman.
+
 ## Pemantau airdrop
 
 Bot bisa memantau **channel Telegram publik** (gratis, tanpa login) dan **akun X**
