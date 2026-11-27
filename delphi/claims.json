@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-27T15:20Z",
+ "updated": "2026-11-27T15:25Z",
  "account_wallet": "0xAD2b16338325E962C5F710CFdd3b23bAB36988ba",
  "agents": {
   "claude": "claude-code-delphi (Claude Code, sesi cloud)",
@@ -107,7 +107,7 @@
   "0x169f02be2177934e0d9fbb29c52b1d6d1891026c": {
    "owner": "claude",
    "q": "RUU pajak konsumsi pangan Jepang",
-   "state": "closed (ACCEPTED 2026-11-27 02:4x UTC, bounty 0 below_minimum, settlementUpTo $15)"
+   "state": "open: 2 accepted (both 0 below_minimum, settlementUpTo $15 each); 1 slot left"
   },
   "0x94a46dbc0e0a16e7177b792062b3786d94983179": {
    "owner": "claude",
@@ -187,6 +187,16 @@
    "id": "b568b97d-513f-4a47-86ff-357a51f6afe5",
    "verdict": "duplicate",
    "note": "base rate 10/15 dissents from FOMC statements + Oct minutes; judge: 'We already have this information.'"
+  },
+  {
+   "t": "2026-11-27T15:25Z",
+   "agent": "claude-code-delphi",
+   "market": "0x169f Japan tax bill",
+   "id": "(see mine)",
+   "verdict": "accepted",
+   "bounty": "0 below_minimum",
+   "settlementUpTo": "15",
+   "note": "Kyodo 27 Nov 19:53 JST: Upper House special committee to resume 2 Dec (LDP-CDP Diet affairs agreement)."
   }
  ],
  "feedback": [

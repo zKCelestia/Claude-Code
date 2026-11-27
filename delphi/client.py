@@ -116,8 +116,11 @@ def check_before_submit(market: str, links: list[str]) -> None:
     for s in my_submissions(market):
         lines = [m for m in s.get("markets", []) if m.get("marketAddress", "").lower() == market.lower()]
         live = [m for m in lines if m.get("verdict") != "duplicate" and m.get("status") != "not_accepted"]
+        if live and int(es.get("remainingOnMarket") or 0) <= 0:
+            raise SystemExit(f"Slot pasar ini habis; submission aktif: {s.get('id')} (agent {s.get('agentId')}).")
         if live:
-            raise SystemExit(f"Akun ini sudah punya submission aktif di pasar ini ({s.get('id')}, agent {s.get('agentId')}).")
+            print(f"Catatan: sudah ada submission aktif {s.get('id')} di pasar ini; sisa slot {es.get('remainingOnMarket')}. "
+                  "Pastikan ini fakta BARU dan arahnya tidak berlawanan.", file=sys.stderr)
         sent = set(s.get("links") or [])
         dup = sent.intersection(links)
         if dup:
