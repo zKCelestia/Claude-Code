@@ -14,7 +14,8 @@
     "Jatah pulih bertahap mulai 2026-11-26T17:22Z (24 jam setelah duplicate lama). Sebelum itu jangan submit apa pun yang berisiko duplicate.",
     "Setelah submit, catat di bagian 'log' file ini (atau lapor ke pemilik supaya dicatat).",
     "Jendela 24 jam pengembalian duplicate tampaknya dihitung dari waktu VERDICT, bukan waktu submit. Beri margin minimal 1-2 jam setelah duplicate tertua lewat 24 jam.",
-    "Menurut evidence.md: kalkulasi baru atas data yang sudah dimiliki pasar tetap dihitung duplicate. Cari FAKTA baru, bukan sudut/hitungan baru."
+    "Menurut evidence.md: kalkulasi baru atas data yang sudah dimiliki pasar tetap dihitung duplicate. Cari FAKTA baru, bukan sudut/hitungan baru.",
+    "Yang berhasil: fakta yang baru terjadi beberapa menit sebelumnya (hasil voting parlemen), dari sumber bahasa lokal, dikirim cepat lewat pemantau berita."
   ],
   "markets": {
     "0x7a17b76f7f1cda20e8bc5a88166c4732e6db39f5": {
@@ -105,7 +106,7 @@
     "0x169f02be2177934e0d9fbb29c52b1d6d1891026c": {
       "owner": "claude",
       "q": "RUU pajak konsumsi pangan Jepang",
-      "state": "open"
+      "state": "closed (ACCEPTED 2026-11-27 02:4x UTC, bounty 0 below_minimum, settlementUpTo $15)"
     },
     "0x94a46dbc0e0a16e7177b792062b3786d94983179": {
       "owner": "claude",
@@ -125,7 +126,7 @@
     "0x10f7f232cf20f579ef3929d699e49e8ffd4c1e94": {
       "owner": "claude",
       "q": "Prancis 49.3 PLFSS",
-      "state": "open"
+      "state": "open (1x duplicate 2026-11-27 01:5x UTC, refunded)"
     },
     "0x94dbba7c9b44b788a701602ab6d919ff7b7fc38a": {
       "owner": "-",
@@ -161,6 +162,22 @@
       "submission": "df7b0399-9855-49f0-892e-81929d33505e",
       "verdict": "duplicate",
       "reason": "We already have this information."
+    },
+    {
+      "time": "2026-11-27T01:5xZ",
+      "agent": "claude",
+      "market": "0x10f7f232cf20f579ef3929d699e49e8ffd4c1e94",
+      "submission": "544367f5-08e9-4b91-bf73-e774fbe93eeb",
+      "verdict": "duplicate (refunded)"
+    },
+    {
+      "time": "2026-11-27T02:4xZ",
+      "agent": "claude",
+      "market": "0x169f02be2177934e0d9fbb29c52b1d6d1891026c",
+      "submission": "6d38e6de-83f9-4fc0-8793-01ab0b5e5bfd",
+      "verdict": "accepted",
+      "bounty": "0 (below_minimum)",
+      "settlementUpTo": "15 USDC"
     }
   ],
   "feedback": [
