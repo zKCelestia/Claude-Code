@@ -20,10 +20,12 @@ langsung dikirim balik ke chat sebagai dokumen.
 
 ## Pustaka skill (asa-skills-pack)
 
-Repo ini memuat **428 skill** di `.claude/skills/` (lihat `.claude/skills/CATALOG.md`).
-Claude Code memuatnya otomatis berdasarkan deskripsi tiap skill, jadi tidak perlu
-diaktifkan manual. Isinya antara lain security/bug-bounty, crypto/trading, otomasi, dan
-pembuatan konten.
+Repo ini memuat **43 skill** di `.claude/skills/` (lihat `.claude/skills/CATALOG.md`),
+dipangkas dari 428 skill asa-skills-pack. Claude Code memuatnya otomatis berdasarkan
+deskripsi tiap skill. Yang disisakan: Claude API/bot Telegram, crypto/web3/trading,
+riset, security defensif, dan dev umum. Skill lain (game dev, marketing, bug bounty,
+dll.) bisa dipulihkan dari commit `ad44053`, mis.
+`git checkout ad44053 -- .claude/skills/nama-skill`.
 
 > Catatan: grup `built-in-skills` dari pack asli **tidak** dipasang karena formatnya untuk
 > platform lain (tidak punya frontmatter). Skill dengan deskripsi > 1024 karakter juga
@@ -36,7 +38,7 @@ akun Anthropic-mu lalu daftarkan ke agent:
 
 ```bash
 export ANTHROPIC_API_KEY=sk-ant-...     # atau `ant auth login`
-python upload_skills_to_bot.py          # unggah semua (ratusan — makan kredit & waktu)
+python upload_skills_to_bot.py          # unggah semua skill di .claude/skills/
 python setup_agent.py                   # pasang skill yang terunggah ke agent
 ```
 
