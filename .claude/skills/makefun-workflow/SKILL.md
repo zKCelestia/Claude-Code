@@ -18,6 +18,10 @@ playbook: what to do in order, and what we learned the hard way in the first ses
 - The transcripts are this session's own Claude Code log (`~/.claude/projects/<cwd>/<id>.jsonl`);
   pass it with `--session`. If the container moved, the newest log is under `~/.claude/projects/-home-user/`.
 
+- Never create a Claude session on bos's behalf for new bounties: its first message shows as if bos
+  typed it, and make.fun login and the run record need bos's own typed prompt. Give bos the text to
+  paste and let bos open the session.
+
 ## 1. Scout
 
 - `GET /api/competitions?status=open` (all pages), keep those with `deadline > now` and `publishedAt <= now`.
