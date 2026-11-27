@@ -12,6 +12,7 @@
 - `group_chat.py`: mode grup, untuk ngobrol bareng bot lain (mis. Muse) dengan rem biaya.
 - `burner/`: burner wallet EVM + Solana dengan guard (batas pengeluaran, allowlist, blokir drainer).
 - `delphi/`: klien Delphi Agent Competition (evidence mining Gensyn).
+- `makefun/`: alat bounty make.fun (pipeline news-image, mock-judge, submit). Playbook: `.claude/skills/makefun-workflow/SKILL.md`.
 - `.claude/skills/`: pustaka skill (asa-skills-pack), daftarnya di `.claude/skills/CATALOG.md`.
 - `tests/`: `pytest tests/` (butuh `pip install "web3[tester]" pytest`).
 
