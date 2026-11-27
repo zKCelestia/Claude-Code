@@ -55,6 +55,8 @@ alokasi.
 5. Skill `flop-hermes-devnet` di `.claude/skills/` itu untuk **devnet** (tidak dapat airdrop),
    dan tiap langkah install/enroll/paid butuh persetujuan bos (lihat NOTES-ASA.md di sana).
 
+Runbook peran agent: [AGENT.md](AGENT.md).
+
 ## Pemantau
 
 ```bash
