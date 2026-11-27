@@ -5,11 +5,14 @@
 # a check is NOT left counting silently: the script prints every failed check and its fix.
 #
 # Usage: makefun/tools/submit_source.sh <slug> <repo-dir> "<title>"
-# Env:   MAKEFUN_HOME   folder holding the unpacked <slug>-kit and makefun-keypair.json (default ~/makefun)
+# Env:   MAKEFUN_HOME   folder holding the unpacked <slug>-kit and makefun-keypair.json
+#                       (default: a makefun/ folder beside this repository, else ~/makefun)
 #        SESSION_LOG    this session's Claude Code log (default: the newest under ~/.claude/projects)
 set -euo pipefail
 slug="$1"; repo="$2"; title="$3"
-home="${MAKEFUN_HOME:-$HOME/makefun}"
+repo_root="$(cd "$(dirname "$0")/../.." && pwd)"
+home="${MAKEFUN_HOME:-$(dirname "$repo_root")/makefun}"
+[ -d "$home" ] || home="$HOME/makefun"
 kit="$home/$slug-kit"
 keypair="$home/makefun-keypair.json"
 session="${SESSION_LOG:-$(ls -t "$HOME"/.claude/projects/*/*.jsonl | head -1)}"
@@ -20,7 +23,7 @@ cd "$kit"
 echo "== bundle (session $session)"
 node cli/makefun.mjs bundle --repo "$repo" --session "$session" --no-discover \
   --mcp github=https://mcp-proxy.anthropic.com --mcp claude-code-remote=builtin \
-  --context "$HOME/Claude-Code/CLAUDE.md" --context "$HOME/Claude-Code/.claude/skills/makefun-workflow/SKILL.md" \
+  --context "$repo_root/CLAUDE.md" --context "$repo_root/.claude/skills/makefun-workflow/SKILL.md" \
   --effort default --notes "Built in a claude.ai cloud Claude Code session." --out "$out" | grep -E "wrote|missing"
 echo "== check"
 node cli/makefun.mjs check --kit . --repo "$repo" --transcripts "$out" | grep -E "^fail|passed|ok:"
