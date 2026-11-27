@@ -16,6 +16,14 @@ dijalankan). Panduan miner-pin di ask.flop.finance masih berlabel **devnet**, ja
 - Sesi berikutnya: bos upload `flop-agent-testnet.json` (password terpisah) ke sesi, lalu lanjut.
   Jangan bikin wallet baru: satu identitas = satu peserta.
 
+## Klaim otomatis tanpa VPS: `flop/agent_http.py`
+
+Proxy sesi Claude menolak WebSocket, jadi CLI resmi tidak bisa konek dari sana. Script ini
+memakai JSON-RPC HTTP dan endpoint HTTP faucet: `status` dan `claim` (satu percobaan, nonce
+dicatat dulu, cek ulang dengan nonce yang sama, menunggu final, tidak klaim lagi sebelum grant
+dipakai). Butuh `pip install substrate-interface`. Dijalankan berkala oleh tugas terjadwal di
+sesi Claude. Kalau container sesi diganti, keystore dan password harus di-upload ulang.
+
 ## Cara agent dihitung (draft airdrop)
 
 - Pool agent 1,2 miliar FLOP, dibagi **pro rata compute yang dibeli di sesi settled**.
