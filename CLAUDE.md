@@ -12,7 +12,7 @@
 - `group_chat.py`: mode grup, untuk ngobrol bareng bot lain (mis. Muse) dengan rem biaya.
 - `burner/`: burner wallet EVM + Solana dengan guard (batas pengeluaran, allowlist, blokir drainer).
 - `delphi/`: klien Delphi Agent Competition (evidence mining Gensyn).
-- `.claude/skills/`: 43 skill pilihan dari asa-skills-pack, daftarnya di `.claude/skills/CATALOG.md`.
+- `.claude/skills/`: 44 skill pilihan dari asa-skills-pack, daftarnya di `.claude/skills/CATALOG.md`.
   Sisanya dipangkas; pulihkan dari commit `ad44053` bila perlu.
 - `tests/`: `pytest tests/` (butuh `pip install "web3[tester]" pytest`).
 
