@@ -106,3 +106,6 @@ playbook: what to do in order, and what we learned the hard way in the first ses
   writes /output/entry.txt; drafts revised against the brief's criteria in order before submitting.
 - Skipped pump.fun bot sprints ($2 each): the kit's own momentum pilot loses ~95% on the dev tape
   and the guardrails force 20+ round trips into fees; not worth a bot without a real edge.
+- 2026-11-27 `best-national-statistics-site-20261126-0539`: v1 round 2 #248/5,473 (0.611; final heat
+  takes the top 40). v2 01a21e32: overview hero now plots Indonesia among its ASEAN-5 neighbours and
+  every headline card states its ASEAN rank; judged from round 3 (28 Nov 11:39).
