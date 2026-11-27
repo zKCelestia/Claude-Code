@@ -8,7 +8,7 @@ Dipanggil dari cron VPS (setelah `agent_http.py claim`). Tiap kali jalan:
 3. Rem: maksimal 1 sesi per 24 jam, total escrow 7 hari <= MAX_7D, saldo final harus
    >= escrow + cadangan fee. Kalau rem kena, tidak bayar apa pun.
 4. Jalankan CLI resmi `flop session run` (escrow = MAX_ESCROW, dibayar penuh ke miner kalau settle).
-5. Kirim ringkasan ke Telegram bos (TELEGRAM_BOT_TOKEN + ALLOWED_USER_IDS dari .env repo).
+5. Hasilnya hanya dicetak ke stdout (masuk log cron). Tidak ada notifikasi keluar.
 
     python flop/auto_session.py            # jalan normal (bisa bayar kalau semua syarat terpenuhi)
     python flop/auto_session.py --dry-run  # tunjukkan pilihan tanpa bayar
@@ -33,7 +33,6 @@ INDEXER = os.environ.get("FLOP_TESTNET_INDEXER", "https://testnet.flopscan.io")
 GATEWAY = "https://gateway.testnet.flop.network"
 FLOP_BIN = os.environ.get("FLOP_BIN", str(Path.home() / ".local/share/flop-cli/0.10.3/node_modules/.bin/flop"))
 STATE = ah.HOME / "auto_session.json"
-REPO_ENV = Path(__file__).resolve().parent.parent / ".env"
 
 BASE = Decimal(10) ** 18
 MAX_ESCROW = Decimal("0.01")        # FLOP per sesi
@@ -136,30 +135,11 @@ def brakes(state: dict, balance: Decimal) -> str:
     return ""
 
 
-def telegram(text: str) -> None:
-    env = dict(os.environ)
-    if REPO_ENV.exists():
-        for line in REPO_ENV.read_text().splitlines():
-            if "=" in line and not line.lstrip().startswith("#"):
-                k, v = line.split("=", 1)
-                env.setdefault(k.strip(), v.strip().strip('"').strip("'"))
-    token = env.get("TELEGRAM_BOT_TOKEN")
-    ids = [x for x in env.get("ALLOWED_USER_IDS", "").replace(" ", "").split(",") if x]
-    if not token or not ids:
-        return
-    for uid in ids:
-        try:
-            requests.post(f"https://api.telegram.org/bot{token}/sendMessage",
-                          json={"chat_id": int(uid), "text": text[:3900]}, timeout=20)
-        except Exception:  # noqa: BLE001 - notifikasi tidak boleh menggagalkan cron
-            pass
-
-
-def notify_once(state: dict, key: str, text: str) -> None:
+def note_once(state: dict, key: str, text: str) -> None:
     if state.setdefault("notified", {}).get(key):
         return
     state["notified"][key] = int(now())
-    telegram(text)
+    print(text)
 
 
 def run_session(cand: dict, block: int) -> tuple[int, str]:
@@ -189,7 +169,7 @@ def main() -> int:
     if rows is None:
         print("indexer offer testnet belum ada")
         return 0
-    notify_once(state, "indexer_open", "FLOP: indexer offer testnet sudah terbuka. Liz mulai cek offer untuk sesi agent.")
+    note_once(state, "indexer_open", "indexer offer testnet sudah terbuka, mulai cek offer untuk sesi agent")
     balance_f, _, block = ah.finalized_balance(me)
     balance = Decimal(str(balance_f))
     cand, why = choose(rows, catalog(), me, block)
@@ -223,9 +203,8 @@ def main() -> int:
         entry["ok"] = rc == 0
     save_state(state)
     status = "BERHASIL" if entry["ok"] else "GAGAL"
-    telegram(f"FLOP sesi agent {status}: miner {cand['miner'][:10]}…, model {cand['model']}, escrow {MAX_ESCROW} FLOP, "
-             f"channel {entry.get('channel')}. Cek testnet.flopscan.io.")
-    print(f"sesi {status} rc={rc}\n{out[-1500:]}")
+    print(f"sesi {status} rc={rc} miner {cand['miner']} model {cand['model']} escrow {MAX_ESCROW} "
+          f"channel {entry.get('channel')}\n{out[-1500:]}")
     return 0 if entry["ok"] else 1
 
 

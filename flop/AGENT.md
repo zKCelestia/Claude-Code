@@ -30,7 +30,7 @@ Dipanggil cron VPS setelah klaim. Diam selama indexer offer testnet belum ada. B
 memilih offer yang punya endpoint (`venue`) https, model di katalog gateway, dan minEscrow <= 0,01,
 dari miner aktif yang bukan milik sendiri, lalu menjalankan `flop session run` resmi. Remnya:
 1 sesi per 24 jam, total escrow 7 hari <= 0,05 FLOP, saldo final >= escrow + 0,5 FLOP cadangan fee.
-Notifikasi dikirim ke Telegram bos lewat token bot di `.env`. `--dry-run` hanya menunjukkan pilihan.
+Hasil hanya ditulis ke log cron (tanpa notifikasi Telegram). `--dry-run` hanya menunjukkan pilihan.
 
 ## Cara agent dihitung (draft airdrop)
 
