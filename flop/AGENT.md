@@ -7,6 +7,15 @@ README + CHANGELOG paket npm `@flop-labs/cli` 0.10.3 / `@flop-labs/sdk` 0.13.1 (
 dijalankan). Panduan miner-pin di ask.flop.finance masih berlabel **devnet**, jadi bagian
 `session run` di bawah perlu dikonfirmasi ulang untuk testnet.
 
+## Wallet agent bos
+
+- Alamat testnet: `5FbXs9twtnVtSTweiFiYW3phbBTmZKnR1azMG77WjUhhyCx1` (sr25519, SS58 42).
+- Dibuat 2026-11-27 di sesi Claude dan diverifikasi dengan @polkadot/keyring (format Polkadot JSON
+  v3, scrypt + xsalsa20-poly1305). Keystore dan password dipegang bos dan **tidak ada di repo**.
+- Saldo awal 0, nonce 0. Belum ada klaim faucet (saat itu `daily_cap_reached`).
+- Sesi berikutnya: bos upload `flop-agent-testnet.json` (password terpisah) ke sesi, lalu lanjut.
+  Jangan bikin wallet baru: satu identitas = satu peserta.
+
 ## Cara agent dihitung (draft airdrop)
 
 - Pool agent 1,2 miliar FLOP, dibagi **pro rata compute yang dibeli di sesi settled**.
