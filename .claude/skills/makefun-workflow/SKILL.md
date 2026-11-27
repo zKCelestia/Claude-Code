@@ -97,3 +97,8 @@ playbook: what to do in order, and what we learned the hard way in the first ses
   walk-forward, band honesty, 758-protocol accounting, costed farm ledgers) 0.9437 dev, 20/20 won;
   field is dense (#200 at 0.9514). v2 (plan column on every row) built but not submitted: account quota
   for this bounty used up. Bos's earlier entry 01a20882 (0.9428) stays the picked final.
+- 2026-11-27 one-liner bounties (blind rounds, results at each deadline): sick-day excuse, Monday
+  review, autocorrect fail, production-DB apology, moon comeback. Each a source bundle whose main.ts
+  writes /output/entry.txt; drafts revised against the brief's criteria in order before submitting.
+- Skipped pump.fun bot sprints ($2 each): the kit's own momentum pilot loses ~95% on the dev tape
+  and the guardrails force 20+ round trips into fees; not worth a bot without a real edge.
