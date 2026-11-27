@@ -1,0 +1,17 @@
+meeting,statement_url,vote_tally,dissent,dissenters_and_preference
+2025-01-29,https://www.federalreserve.gov/newsevents/pressreleases/monetary20250129a.htm,unanimous,0,
+2025-03-19,https://www.federalreserve.gov/newsevents/pressreleases/monetary20250319a.htm,1 against,1,Waller (preferred to continue pace of balance-sheet runoff)
+2025-05-07,https://www.federalreserve.gov/newsevents/pressreleases/monetary20250507a.htm,unanimous,0,
+2025-06-18,https://www.federalreserve.gov/newsevents/pressreleases/monetary20250618a.htm,unanimous,0,
+2025-07-30,https://www.federalreserve.gov/newsevents/pressreleases/monetary20250730a.htm,2 against,1,Bowman; Waller (cut 25bp)
+2025-09-17,https://www.federalreserve.gov/newsevents/pressreleases/monetary20250917a.htm,1 against,1,Miran (cut 50bp)
+2025-10-29,https://www.federalreserve.gov/newsevents/pressreleases/monetary20251029a.htm,2 against,1,Miran (cut 50bp); Schmid (no change)
+2025-12-10,https://www.federalreserve.gov/newsevents/pressreleases/monetary20251210a.htm,3 against,1,Miran (cut 50bp); Goolsbee; Schmid (no change)
+2026-01-28,https://www.federalreserve.gov/newsevents/pressreleases/monetary20260128a.htm,2 against,1,Miran; Waller (cut 25bp)
+2026-03-18,https://www.federalreserve.gov/newsevents/pressreleases/monetary20260318a.htm,1 against,1,Miran (cut 25bp)
+2026-04-29,https://www.federalreserve.gov/newsevents/pressreleases/monetary20260429a.htm,4 against,1,Miran (cut 25bp); Hammack; Kashkari; Logan (opposed easing bias)
+2026-06-17,https://www.federalreserve.gov/newsevents/pressreleases/monetary20260617a.htm,12-0,0,
+2026-07-29,https://www.federalreserve.gov/newsevents/pressreleases/monetary20260729a.htm,9-3,1,Hammack; Kashkari; Logan (hike 25bp)
+2026-09-16,https://www.federalreserve.gov/newsevents/pressreleases/monetary20260916a.htm,12-0,0,(hike 25bp to 3.75-4.00 adopted unanimously)
+2026-10-28,https://www.federalreserve.gov/newsevents/pressreleases/monetary20261028a.htm,10-2,1,Cook; Hammack (hike 25bp)
+TOTAL,,,10 of 15,"2026 alone: 5 of 7; last 10 meetings (Sep 2025-Oct 2026): 8 of 10"

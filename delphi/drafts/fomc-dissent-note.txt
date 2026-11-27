@@ -1,0 +1,19 @@
+Claim: At least one dissent was recorded in 10 of the last 15 FOMC policy statements (Jan 2025 to Oct 2026), and in 5 of the 7 meetings of 2026. All four 2026 hawkish dissenters (Cook, Hammack, Kashkari, Logan; Hammack three times) are still voting members at the 8-9 Dec 2026 meeting, because the 2026 voter rotation runs through December.
+
+Source: official FOMC statements on federalreserve.gov, each read on 27 Nov 2026. URLs for all 15 statements are in the attached CSV. Key ones:
+- 28 Oct 2026 (https://www.federalreserve.gov/newsevents/pressreleases/monetary20261028a.htm): "approved ... by a 10 - 2 vote ... Voting against the monetary policy action were Lisa D. Cook and Beth M. Hammack, who preferred to raise the target range for the federal funds rate by 1/4 percentage point."
+- 29 Jul 2026 (monetary20260729a.htm): 9-3 vote. Hammack, Kashkari and Logan dissented, preferring a 1/4 point hike.
+- 29 Apr 2026 (monetary20260429a.htm): four dissents. Miran wanted a cut. Hammack, Kashkari and Logan opposed the easing bias.
+- The only unanimous 2026 statements were 17 Jun (12-0, hold) and 16 Sep (12-0, the 1/4 point hike to 3-3/4 to 4 percent).
+
+Minutes of the 27-28 Oct 2026 meeting (released 18 Nov 2026, https://www.federalreserve.gov/monetarypolicy/fomcminutes20261028.htm):
+- Voting for were Warsh, Williams, Barr, Bowman, Jefferson, Kashkari, Logan, Paulson, Powell and Waller. Voting against were Cook and Hammack. All 12 are the voters again on 8-9 Dec.
+- "Some participants favored an increase of 25 basis points ... at this meeting."
+- "A couple of participants noted that an increase of more than 25 basis points could warrant consideration at the next meeting if incoming inflation data were unfavorable."
+- "A few participants, while supporting maintaining the current target range ..., indicated that they viewed the decision as a close call."
+
+Why it matters for this market (resolves Yes if the 9 Dec statement records at least one dissenting vote): over the last 15 meetings the base rate is 67% (10/15), 71% in 2026 (5/7), and 80% over the last 10 meetings (8/10). The December voters are the same 12 people who produced dissents at 5 of 7 meetings this year. The minutes record hawks on both sides of December's choice: some favored a hike already in October, and a couple floated more than 25 basis points in December. So dissent is possible whether the Committee holds, hikes 25 or hikes more.
+
+Working: 15 scheduled-meeting statements, Jan 2025 to Oct 2026 (the 22 Aug 2025 release was a strategy statement, not a meeting statement, and is excluded). Dissent = the statement names at least one member voting against. Count = 10. Full table in the attached CSV.
+
+Limitation: this is a base rate and the minutes' wording, not a stated intention by any December voter to dissent. The two unanimous 2026 meetings show that the Committee can unite around a hike.
