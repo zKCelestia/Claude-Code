@@ -33,6 +33,32 @@ dijalankan). Panduan miner-pin di ask.flop.finance masih berlabel **devnet**, ja
 - Runtime testnet specVersion 1014039. CLI 0.10.1+ sudah siap untuk 1014040, jadi upgrade itu
   kemungkinan dekat. `python -m flop.watch` akan memberi alert saat itu terjadi.
 
+## Temuan setelah bedah CLI 0.10.3 (2026-11-27 ~05:30 UTC)
+
+- `flop keys generate` defaultnya **ed25519**, sedangkan agent harus `--type sr25519`. Mnemonic
+  tidak ditampilkan (kecuali `--show-secret`), jadi backup-nya adalah file keystore + password.
+- `session run --new-wallet` menyimpan wallet **tanpa enkripsi**. Tidak dipakai.
+- `session run` dan `launch --pay wallet` sama-sama butuh `--miner` dan `--endpoint` miner. Tanpa
+  `--endpoint`, CLI memakai `http://127.0.0.1:8645` (mesin miner sendiri). Endpoint miner tidak
+  ada on-chain maupun di explorer, dan indexer offer testnet belum dipublikasi (CLI hanya punya
+  indexer devnet; `testnet.flopscan.io/api/session-offers` 404). **Untuk agent publik, tahap
+  sesi belum bisa jalan.**
+- Escrow minimum force-open = kapasitas miner (G/s) × durasi (blok) × tarif. Miner 90.000 G/s
+  dengan durasi 1200 blok butuh sekitar 4,5 FLOP, padahal faucet cuma 10 FLOP. Channel yang settled
+  di explorer kebanyakan memakai miner kecil (sekitar 50 G/s) dengan escrow 0,005 FLOP. Script
+  membatasi escrow maksimal 0,05 FLOP.
+- Gateway testnet belum stabil: sempat menampilkan 2 model, beberapa menit kemudian `/health`
+  timeout dan daftar model kosong.
+- Explorer: 483 miner terdaftar, sekitar 1.679 agent aktif. Finality sempat tertinggal lebih dari
+  300 blok, lalu pulih (lag 6).
+
+## Script: `flop/agent_setup.sh`
+
+Tahap terpisah, tidak ada yang berantai otomatis: `check` → `install` → `keygen` → `faucet` →
+`balance` → `session`. Tiap tahap mengecek genesis dulu. Wallet ada di
+`~/.flop/agent-testnet/` (mode 700) dan log aktivitas di `activity.log`. `install` dan `session`
+minta konfirmasi y/N.
+
 ## Langkah (jalan di mesin bos sendiri, misalnya VPS bot)
 
 Container sesi Claude ini sementara (bisa hilang), jadi **wallet jangan dibuat di sini**.
