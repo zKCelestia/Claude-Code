@@ -11,6 +11,7 @@
 - `bot.py`, `setup_agent.py`: bot Telegram di atas Claude Managed Agents (chat pribadi, file in/out, mode grup).
 - `group_chat.py`: mode grup, untuk ngobrol bareng bot lain (mis. Muse) dengan rem biaya.
 - `burner/`: burner wallet EVM + Solana dengan guard (batas pengeluaran, allowlist, blokir drainer).
+- `flop/`: catatan riset FLOP Network + pemantau testnet read-only (`python -m flop.watch`).
 - `delphi/`: klien Delphi Agent Competition (evidence mining Gensyn).
 - `.claude/skills/`: pustaka skill (asa-skills-pack), daftarnya di `.claude/skills/CATALOG.md`.
 - `tests/`: `pytest tests/` (butuh `pip install "web3[tester]" pytest`).

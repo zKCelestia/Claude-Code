@@ -16,3 +16,6 @@ delphi/submissions.jsonl
 # monitor (state lokal)
 monitor/watchlist.json
 monitor/state.json
+
+# flop (state lokal)
+flop/state.json
