@@ -77,6 +77,15 @@ playbook: what to do in order, and what we learned the hard way in the first ses
   the earlier one: `node cli/makefun.mjs final <slug> <submission_id>`.
 - After each blind round: `node cli/makefun.mjs rounds <slug>` shows your rank and the five above/below.
 - Record outcomes and lessons back into this file.
+- **Before the last polish, check you can still submit**: `GET /api/competitions/<slug>/quota`
+  (`can_submit`). An account's total per competition can be lowered by "account reputation" with no
+  number shown; the daily cap is not the real limit. Spend the last slot on the best version.
+- The account may already hold entries from other sessions, and a picked final (`status` says
+  "Your final is …"). A picked final counts instead of the newest entry; switching it is bos's call.
+- Judge bounties rated against house dashboards: every good entry wins 20/20, so the rate is the
+  judge's *margin*. Put each criterion's evidence on the cover itself (radar: watchlist coverage,
+  the value formula, held-out tests, an accounting of every protocol, and each row's farm plan with
+  effort and cost).
 
 ## Results log
 
@@ -84,3 +93,7 @@ playbook: what to do in order, and what we learned the hard way in the first ses
 - 2026-11-27 `news-image-20261126`: 12-card glanceable page 0.9855 dev (v1 dense 0.980).
 - 2026-11-27 `best-flight-game-20261126-0057`: v1 #4003/13,681 (0.508) → v2 #127/17,578 (0.707)
   after radio/objectives/systems/six-pack/16:10 shots; v3 (brighter, ring-ahead cover) in the final.
+- 2026-11-27 `token-radar-01`: Dawnwatch (own model tvl+growth+age, CV ×3.54 vs ×5.18 baseline,
+  walk-forward, band honesty, 758-protocol accounting, costed farm ledgers) 0.9437 dev, 20/20 won;
+  field is dense (#200 at 0.9514). v2 (plan column on every row) built but not submitted: account quota
+  for this bounty used up. Bos's earlier entry 01a20882 (0.9428) stays the picked final.
