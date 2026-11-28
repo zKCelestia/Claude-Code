@@ -4,6 +4,7 @@
     python -m zayro setup --ref KODE [--name N]  # session key + referral + username + misi
     python -m zayro daily [--notify]             # garap (untuk cron); --notify = lapor ke Telegram
     python -m zayro status                       # poin & misi
+    python -m zayro bug "apa yang rusak + cara mengulanginya" [https://link]
 
 `daily` membaca ZAYRO_REF / ZAYRO_NAME dari .env, membuat wallet sendiri kalau belum ada,
 dan dengan --notify hanya mengirim pesan kalau ada yang diklaim atau ada error baru.
@@ -88,6 +89,24 @@ def cmd_status(_, z=None):
     print(z.summary())
 
 
+def cmd_bug(a):
+    z = Zayro()
+    note = " ".join(a.note.split())
+    print("Laporan bug yang akan dikirim ke tim zayro:\n")
+    print("  " + note)
+    if a.url:
+        print("  Link: " + a.url)
+    print(f"\nWallet: {z.address}")
+    if not a.yes and input("Kirim? (y/N) ").strip().lower() != "y":
+        print("Batal, tidak ada yang dikirim.")
+        return
+    res = z.report_bug(note, a.url)
+    if res.get("ok"):
+        print("✓ Terkirim. Poin masuk kalau tim zayro mengonfirmasi bug-nya.")
+    else:
+        sys.exit(f"✗ Ditolak: {res.get('reason')}")
+
+
 def cmd_test_notify(_):
     errors = notify.send("✅ Tes dari zayro: laporan Telegram sudah nyambung.")
     if errors:
@@ -113,6 +132,11 @@ def main() -> None:
     d.set_defaults(fn=cmd_daily)
     sub.add_parser("status").set_defaults(fn=cmd_status)
     sub.add_parser("test-notify").set_defaults(fn=cmd_test_notify)
+    b = sub.add_parser("bug", help="lapor bug ke tim zayro (misi +5000, direview manual)")
+    b.add_argument("note", help="apa yang rusak dan cara mengulanginya (20-500 karakter)")
+    b.add_argument("url", nargs="?", help="link screenshot/post (opsional, https://)")
+    b.add_argument("-y", "--yes", action="store_true", help="kirim tanpa konfirmasi")
+    b.set_defaults(fn=cmd_bug)
     a = ap.parse_args()
     try:
         a.fn(a)

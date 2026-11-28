@@ -221,10 +221,24 @@ class Zayro:
         msg = f"zayro name: {self._addr()} {name} at {at}"
         return self._post("/names", {"user": self.address, **self.session_sign(msg), "name": name, "at": at})
 
-    def claim_mission(self, mission_id: str) -> dict:
+    def claim_mission(self, mission_id: str, url: str | None = None, note: str | None = None) -> dict:
         at = int(time.time() * 1000)
         msg = f"zayro mission: {self._addr()} {mission_id} at {at}"
-        return self._post("/missions/claim", {"user": self.address, **self.session_sign(msg), "mission": mission_id, "at": at})
+        body = {"user": self.address, **self.session_sign(msg), "mission": mission_id, "at": at}
+        if url:
+            body["url"] = url
+        if note:
+            body["note"] = note
+        return self._post("/missions/claim", body)
+
+    def report_bug(self, note: str, url: str | None = None) -> dict:
+        """Kirim laporan bug (misi 'bug', direview tim zayro). Tulis manual: apa yang rusak + cara mengulanginya."""
+        note = " ".join(note.split())
+        if not 20 <= len(note) <= 500:
+            raise ZayroError(f"Laporan harus 20-500 karakter (sekarang {len(note)}).")
+        if url and not url.startswith("https://"):
+            raise ZayroError("Link harus diawali https://")
+        return self.claim_mission("bug", url=url, note=note)
 
     def autorun(self, ref: str | None = None, name: str | None = None) -> list[str]:
         """Satu putaran otomatis (aman diulang tiap jam): session key, referral dan

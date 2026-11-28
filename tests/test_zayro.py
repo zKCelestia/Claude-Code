@@ -128,3 +128,16 @@ def test_notify_without_token_reports_error(monkeypatch):
 
     monkeypatch.delenv("TELEGRAM_BOT_TOKEN", raising=False)
     assert notify.send("hai") != []
+
+
+def test_bug_report_validates_and_sends_note(z):
+    z.register_session(nonce=0)
+    with pytest.raises(ZayroError):
+        z.report_bug("terlalu pendek")
+    with pytest.raises(ZayroError):
+        z.report_bug("x" * 30, url="javascript:alert(1)")
+    z.report_bug("Tombol close  gagal\n saat harga lompat, ulangi: buka 1000x BTC", url="https://x.com/a/status/1")
+    route, body = z.http.posts[-1]
+    assert route == "/missions/claim" and body["mission"] == "bug"
+    assert body["note"] == "Tombol close gagal saat harga lompat, ulangi: buka 1000x BTC"
+    assert body["url"] == "https://x.com/a/status/1"
