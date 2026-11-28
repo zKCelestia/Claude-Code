@@ -5,6 +5,7 @@
     python -m zayro daily [--notify]             # garap (untuk cron); --notify = lapor ke Telegram
     python -m zayro status                       # poin & misi
     python -m zayro bug "apa yang rusak + cara mengulanginya" [https://link]
+    python -m zayro mission follow               # misi X: follow | post|quote|reply|story|content URL
     python -m zayro spin                         # putar roulette sekali (manual, konfirmasi)
     python -m zayro claim ID ALAMAT_BASE|EMAIL LINK_REPLY_X
 
@@ -150,6 +151,35 @@ def cmd_claim(a):
     print("✓ Klaim terkirim, tunggu dicek tim zayro (maks. 24 jam)." if res.get("ok") else f"✗ Ditolak: {res.get('reason')}")
 
 
+MISSION_HELP = {
+    "follow": "follow @zayrotrade di X dulu, baru klaim (tanpa link)",
+    "post": "link post X-mu hari ini tentang zayro",
+    "quote": "link quote X-mu atas post terbaru @zayrotrade",
+    "reply": "link reply X-mu di post terbaru @zayrotrade",
+    "story": "link post cerita zayro-mu (direview tim)",
+    "content": "link thread/video tentang zayro (direview tim)",
+}
+
+
+def cmd_mission(a):
+    z = Zayro()
+    kind = a.kind.lower()
+    ms = z.missions()
+    m = next((m for m in ms if m["id"] == kind), None) or next((m for m in ms if m.get("claim") == kind), None)
+    if not m:
+        sys.exit(f"Misi '{kind}' tidak ada. Pilihan: " + ", ".join(MISSION_HELP))
+    if m.get("done"):
+        print(f"Misi {m['id']} sudah selesai untuk periode ini.")
+        return
+    if m.get("x") and not a.url:
+        sys.exit(f"Misi {m['id']} butuh link: {MISSION_HELP.get(kind, 'link post X')}")
+    if a.url and not a.url.startswith("https://"):
+        sys.exit("Link harus diawali https://")
+    res = z.claim_mission(m["id"], url=a.url)
+    pts = f" +{res['points']} poin" if res.get("points") else ""
+    print(f"✓ misi {m['id']}{pts}" if res.get("ok") else f"✗ misi {m['id']}: {res.get('reason')}")
+
+
 def cmd_test_notify(_):
     errors = notify.send("✅ Tes dari zayro: laporan Telegram sudah nyambung.")
     if errors:
@@ -180,6 +210,10 @@ def main() -> None:
     b.add_argument("url", nargs="?", help="link screenshot/post (opsional, https://)")
     b.add_argument("-y", "--yes", action="store_true", help="kirim tanpa konfirmasi")
     b.set_defaults(fn=cmd_bug)
+    mi = sub.add_parser("mission", help="klaim misi X: follow | post URL | quote URL | reply URL | story URL | content URL")
+    mi.add_argument("kind")
+    mi.add_argument("url", nargs="?")
+    mi.set_defaults(fn=cmd_mission)
     sp = sub.add_parser("spin", help="putar roulette sekali (bayar poin)")
     sp.add_argument("-y", "--yes", action="store_true")
     sp.set_defaults(fn=cmd_spin)

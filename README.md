@@ -222,6 +222,8 @@ python -m zayro daily                                # check-in harian + misi ya
 python -m zayro status
 ```
 
+Misi X: `bash deploy/zayro.sh mission follow` (setelah follow) atau `mission post|quote|reply LINK_POST_X`.
+
 Roulette: `bash deploy/zayro.sh spin` (sekali putar, potong 500 poin) dan `bash deploy/zayro.sh claim ID ALAMAT_BASE LINK_REPLY_X` kalau menang hadiah asli.
 
 Lapor bug (misi +5.000, direview tim zayro): `bash deploy/zayro.sh bug "apa yang rusak + cara mengulanginya" [https://link]`. Tulis manual dan hanya untuk bug yang benar-benar bisa diulang.
