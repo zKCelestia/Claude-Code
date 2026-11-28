@@ -105,3 +105,26 @@ def test_autorun_binds_once_and_reports_only_work(z):
     z.http.missions = [{"id": "checkin", "claim": "checkin", "ready": False, "done": True}]
     n = len(z.http.posts)
     assert z.autorun(ref="69961778") == [] and len(z.http.posts) == n
+
+
+def test_notify_sends_to_every_owner(monkeypatch):
+    from zayro import notify
+
+    sent = []
+
+    class H:
+        def post(self, url, json=None, timeout=None):
+            sent.append((url, json["chat_id"]))
+            return Resp({"ok": True})
+
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "123:abc")
+    monkeypatch.setenv("ALLOWED_USER_IDS", "11, 22")
+    assert notify.send("hai", http=H()) == []
+    assert [c for _, c in sent] == ["11", "22"] and sent[0][0].endswith("/bot123:abc/sendMessage")
+
+
+def test_notify_without_token_reports_error(monkeypatch):
+    from zayro import notify
+
+    monkeypatch.delenv("TELEGRAM_BOT_TOKEN", raising=False)
+    assert notify.send("hai") != []

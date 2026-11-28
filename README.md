@@ -222,7 +222,12 @@ python -m zayro daily                                # check-in harian + misi ya
 python -m zayro status
 ```
 
-**Lewat bot (otomatis):** isi `ZAYRO_ENABLED=1` (opsional `ZAYRO_REF`, `ZAYRO_NAME`) di `.env`
+**Gratis (tanpa bot AI):** `bash deploy/zayro.sh install`, isi `TELEGRAM_BOT_TOKEN` dan
+`ALLOWED_USER_IDS` di `.env`, kirim `/start` ke bot-mu, lalu `bash deploy/zayro.sh test` dan
+`bash deploy/zayro.sh run`. Cron jalan tiap jam dan lapor ke Telegram lewat Bot API biasa.
+Tidak butuh kunci API Anthropic. Jangan jalankan bersamaan dengan mode bot (`ZAYRO_ENABLED=1`).
+
+**Lewat bot Liz (otomatis):** isi `ZAYRO_ENABLED=1` (opsional `ZAYRO_REF`, `ZAYRO_NAME`) di `.env`
 lalu restart. Bot membuat wallet sendiri kalau `.env.zayro` belum ada, menggarap tiap jam, dan
 lapor ke Telegram hanya kalau ada yang diklaim. `/zayro` untuk garap sekarang dan lihat poin.
 Tanpa bot, pasang `daily` di cron: `17 1 * * * cd ~/Claude-Code && .venv/bin/python -m zayro daily`.

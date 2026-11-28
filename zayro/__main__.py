@@ -2,14 +2,22 @@
 
     python -m zayro init                         # buat wallet baru di .env.zayro
     python -m zayro setup --ref KODE [--name N]  # session key + referral + username + misi
-    python -m zayro daily                        # check-in + misi siap klaim (pasang di cron)
+    python -m zayro daily [--notify]             # garap (untuk cron); --notify = lapor ke Telegram
     python -m zayro status                       # poin & misi
+
+`daily` membaca ZAYRO_REF / ZAYRO_NAME dari .env, membuat wallet sendiri kalau belum ada,
+dan dengan --notify hanya mengirim pesan kalau ada yang diklaim atau ada error baru.
 """
 
 import argparse
 import sys
 
-from .client import ENV_PATH, Zayro, ZayroError, create_wallet
+from dotenv import load_dotenv
+
+from . import notify
+from .client import ENV_PATH, ROOT, Zayro, ZayroError, create_wallet
+
+LAST_ERROR = ROOT / ".zayro_last_error"
 
 
 def _show(label: str, res: dict) -> None:
@@ -39,30 +47,60 @@ def cmd_setup(a):
     cmd_status(a, z)
 
 
+def _report(a, text: str) -> None:
+    print(text)
+    if a.notify:
+        for err in notify.send(text):
+            print("Telegram gagal:", err, file=sys.stderr)
+
+
 def cmd_daily(a):
-    z = Zayro()
-    print("Wallet:", z.address)
-    claimed = z.claim_auto_missions()
-    for mid, res in claimed:
-        _show(f"misi {mid}", res)
-    if not claimed:
-        print("  (tidak ada misi yang siap diklaim)")
-    cmd_status(a, z)
+    import os
+
+    ref = os.environ.get("ZAYRO_REF", "").strip().lower() or None
+    name = os.environ.get("ZAYRO_NAME", "").strip() or None
+    try:
+        if not ENV_PATH.exists():
+            addr = create_wallet()
+            _report(a, f"🆕 Wallet zayro dibuat: {addr}\nKuncinya di {ENV_PATH.name} di VPS. Backup file itu.")
+        z = Zayro()
+        lines = z.autorun(ref, name)
+        summary = z.summary()
+    except Exception as e:  # jaringan, relayer, RPC
+        msg = f"⚠️ zayro gagal: {e}"
+        old = LAST_ERROR.read_text() if LAST_ERROR.exists() else ""
+        LAST_ERROR.write_text(msg)
+        if msg != old:  # error yang sama tidak dikirim berulang tiap jam
+            _report(a, msg)
+        else:
+            print(msg)
+        sys.exit(1)
+    LAST_ERROR.unlink(missing_ok=True)
+    if lines:
+        _report(a, "🟢 zayro\n" + "\n".join(lines) + f"\n\nWallet: {z.address}\n{summary}")
+    else:
+        print("Tidak ada yang perlu diklaim.\n" + summary)
 
 
 def cmd_status(_, z=None):
     z = z or Zayro()
-    p = z.points()
-    print(
-        f"Poin: {p.get('points')} (misi {p.get('missionPoints')}, trading {p.get('tradingPoints')}, "
-        f"bonus {p.get('bonusPoints')}, referral {p.get('referralPoints')}) | rank {p.get('rank')}"
-    )
-    print(f"Kode referral: {p.get('code')} | referrer: {p.get('referrer')} | referee: {p.get('referees')}")
-    todo = [m["id"] for m in z.missions() if not m.get("done")]
-    print("Misi belum selesai:", ", ".join(todo) or "-")
+    print("Wallet:", z.address)
+    print(z.summary())
+
+
+def cmd_test_notify(_):
+    errors = notify.send("✅ Tes dari zayro: laporan Telegram sudah nyambung.")
+    if errors:
+        print("Gagal kirim ke Telegram:")
+        for err in errors:
+            print("  -", err)
+        print("Cek TELEGRAM_BOT_TOKEN & ALLOWED_USER_IDS di .env, dan pastikan sudah kirim /start ke bot.")
+        sys.exit(1)
+    print("Terkirim. Cek Telegram-mu.")
 
 
 def main() -> None:
+    load_dotenv(ROOT / ".env")
     ap = argparse.ArgumentParser(prog="python -m zayro", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("init").set_defaults(fn=cmd_init)
@@ -70,8 +108,11 @@ def main() -> None:
     s.add_argument("--ref")
     s.add_argument("--name")
     s.set_defaults(fn=cmd_setup)
-    sub.add_parser("daily").set_defaults(fn=cmd_daily)
+    d = sub.add_parser("daily")
+    d.add_argument("--notify", action="store_true", help="kirim laporan ke Telegram")
+    d.set_defaults(fn=cmd_daily)
     sub.add_parser("status").set_defaults(fn=cmd_status)
+    sub.add_parser("test-notify").set_defaults(fn=cmd_test_notify)
     a = ap.parse_args()
     try:
         a.fn(a)

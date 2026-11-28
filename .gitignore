@@ -20,3 +20,5 @@ monitor/state.json
 # zayro: wallet testnet (rahasia)
 .env.zayro
 .env.tmp
+zayro.log
+.zayro_last_error
