@@ -109,3 +109,7 @@ playbook: what to do in order, and what we learned the hard way in the first ses
 - 2026-11-27 `best-national-statistics-site-20261126-0539`: v1 round 2 #248/5,473 (0.611; final heat
   takes the top 40). v2 01a21e32: overview hero now plots Indonesia among its ASEAN-5 neighbours and
   every headline card states its ASEAN rank; judged from round 3 (28 Nov 11:39).
+- 2026-11-28 results, one-liners 27 Nov (finals, ~2,500-2,600 entrants each, no prize): autocorrect
+  "sext/seat, all-staff channel" #187 (0.639; #1 0.791); DB apology 0.585, Monday 0.519, sick-day
+  0.430 (all outside the top 200). Lesson: the slip-plus-panic format and a concrete twist beat
+  softer observational lines; the sick-day line was too gentle for "gets the laugh".
