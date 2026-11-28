@@ -9,6 +9,7 @@
 """
 
 import json
+import os
 import secrets
 import time
 from datetime import datetime, timezone
@@ -47,7 +48,7 @@ DEFAULT_POLICY = {
     },
 }
 
-# Trade harian: posisi minimum zayro ($10 margin x 50 = $500), ditahan sebentar lalu ditutup.
+# Trade harian (ZAYRO_TRADES_PER_DAY kali, satu per jam): posisi minimum zayro ($10 margin x 50 = $500), ditahan sebentar lalu ditutup.
 TRADE_MARGIN = 10
 TRADE_LEVERAGE = 50
 TRADE_HOLD_S = 30
@@ -82,6 +83,15 @@ CLOSE_TYPE = [
     {"name": "deadline", "type": "uint64"},
     {"name": "nonce", "type": "uint256"},
 ]
+
+
+def trades_per_day() -> int:
+    """ZAYRO_TRADES_PER_DAY di .env (default 1). Cron jalan tiap jam, jadi maksimal 24."""
+    try:
+        n = int(os.environ.get("ZAYRO_TRADES_PER_DAY", "1"))
+    except ValueError:
+        n = 1
+    return max(0, min(24, n))
 
 
 def _today() -> str:
@@ -235,9 +245,11 @@ class ZayroChain:
         except PolicyError as e:
             lines.append(f"✗ swap ditolak guard: {e}")
         st = _state()
-        if st.get("last_trade_day") != _today() and self.usdc_balance() >= TRADE_MARGIN:
-            st["last_trade_day"] = _today()
-            _save_state(st)  # catat dulu: maksimal satu trade per hari walau ada error
+        if st.get("trade_day") != _today():
+            st = {"trade_day": _today(), "trades": 0}
+        if st["trades"] < trades_per_day() and self.usdc_balance() >= TRADE_MARGIN:
+            st["trades"] += 1
+            _save_state(st)  # catat dulu: jatah harian tetap terhitung walau trade error
             lines += self.trade_once()
         return lines
 

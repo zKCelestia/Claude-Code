@@ -244,3 +244,16 @@ def test_trade_once_opens_waits_and_closes(chain, monkeypatch):
     routes = [r for r, _ in chain.z.http.posts]
     assert "/open" in routes and "/close" in routes
     assert "PnL -1.50" in lines[0] and "+150 ZAYRO" in lines[0]
+
+
+def test_trades_per_day_limit(chain, monkeypatch):
+    calls = []
+    monkeypatch.setattr(chain, "swap_available", lambda: [])
+    monkeypatch.setattr(chain, "usdc_balance", lambda: 900)
+    monkeypatch.setattr(chain, "trade_once", lambda: calls.append(1) or ["✓ trade"])
+    monkeypatch.setenv("ZAYRO_TRADES_PER_DAY", "2")
+    for _ in range(4):
+        chain.autorun()
+    assert len(calls) == 2
+    monkeypatch.setenv("ZAYRO_TRADES_PER_DAY", "999")
+    assert zo.trades_per_day() == 24
