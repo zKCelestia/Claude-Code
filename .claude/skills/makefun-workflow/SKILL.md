@@ -113,3 +113,11 @@ playbook: what to do in order, and what we learned the hard way in the first ses
   "sext/seat, all-staff channel" #187 (0.639; #1 0.791); DB apology 0.585, Monday 0.519, sick-day
   0.430 (all outside the top 200). Lesson: the slip-plus-panic format and a concrete twist beat
   softer observational lines; the sick-day line was too gentle for "gets the laugh".
+- 2026-11-28 `make-minecraft-01` (Freebuff-only bounty): Liz cannot build these; bos built "Rising
+  Tide" in Freebuff on his VPS with Liz directing. Entry 01a22094 passed every check
+  (transcripts_tool, thinking_fresh 100%). Flow that worked: tmux; `makefun login` on the VPS first
+  (record refuses without an API key, and a session started before record is never counted); kit
+  `record` in window 0; `CODEBUFF_TRACE=1 freebuff` in a new window; the first prompt has Freebuff run
+  init; Esc + "commit now" when it loops; /exit; `record --stop`; submit with --harness freebuff
+  --harness-version <freebuff --version> --provider deepseek --model deepseek/deepseek-v4-flash
+  --effort default --mcp none --instructions none (Freebuff's trace holds no model name).
