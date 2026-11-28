@@ -5,6 +5,8 @@
     python -m zayro daily [--notify]             # garap (untuk cron); --notify = lapor ke Telegram
     python -m zayro status                       # poin & misi
     python -m zayro bug "apa yang rusak + cara mengulanginya" [https://link]
+    python -m zayro spin                         # putar roulette sekali (manual, konfirmasi)
+    python -m zayro claim ID ALAMAT_BASE|EMAIL LINK_REPLY_X
 
 `daily` membaca ZAYRO_REF / ZAYRO_NAME dari .env, membuat wallet sendiri kalau belum ada,
 dan dengan --notify hanya mengirim pesan kalau ada yang diklaim atau ada error baru.
@@ -107,6 +109,47 @@ def cmd_bug(a):
         sys.exit(f"✗ Ditolak: {res.get('reason')}")
 
 
+def cmd_spin(a):
+    z = Zayro()
+    season = z._get("/cases")
+    cost = int(season.get("cost", 500))
+    pts = int(z.points().get("points") or 0)
+    if not season.get("open"):
+        sys.exit("Roulette sedang tutup.")
+    if pts < cost:
+        sys.exit(f"Poin belum cukup: {pts} / {cost}. Tunggu check-in beberapa hari lagi.")
+    print(f"Poin sekarang {pts}. Satu putaran memotong {cost} poin (posisi leaderboard bisa turun).")
+    if not a.yes and input("Putar sekali? (y/N) ").strip().lower() != "y":
+        print("Batal.")
+        return
+    res = z.spin()
+    if not res.get("ok"):
+        sys.exit(f"✗ Ditolak: {res.get('reason')}")
+    d = res.get("draw") or {}
+    print(f"🎰 Hasil: {d.get('name')} [{d.get('tier')}] (id {d.get('id')})")
+    if d.get("claim"):
+        print(
+            "\n🎉 HADIAH ASLI! Cara klaim (dicek manual oleh tim zayro):\n"
+            f"  1. Reply post roulette mereka di X dengan screenshot kemenanganmu: {season.get('claimPost')}\n"
+            "  2. Lalu jalankan:\n"
+            f"     bash deploy/zayro.sh claim {d.get('id')} ALAMAT_BASE_atau_EMAIL LINK_REPLY_X\n"
+            "     (USDC: alamat wallet di Base mainnet milikmu. Merch: email.)"
+        )
+    elif d.get("prize") == "again":
+        print("Dapat putaran gratis: jalankan spin lagi, poinnya dikembalikan.")
+    print("\n" + z.summary())
+
+
+def cmd_claim(a):
+    z = Zayro()
+    print(f"Klaim hadiah #{a.id} ke {a.contact}\nBukti X: {a.post}")
+    if not a.yes and input("Kirim klaim? (y/N) ").strip().lower() != "y":
+        print("Batal.")
+        return
+    res = z.claim_prize(a.id, a.contact, a.post)
+    print("✓ Klaim terkirim, tunggu dicek tim zayro (maks. 24 jam)." if res.get("ok") else f"✗ Ditolak: {res.get('reason')}")
+
+
 def cmd_test_notify(_):
     errors = notify.send("✅ Tes dari zayro: laporan Telegram sudah nyambung.")
     if errors:
@@ -137,6 +180,15 @@ def main() -> None:
     b.add_argument("url", nargs="?", help="link screenshot/post (opsional, https://)")
     b.add_argument("-y", "--yes", action="store_true", help="kirim tanpa konfirmasi")
     b.set_defaults(fn=cmd_bug)
+    sp = sub.add_parser("spin", help="putar roulette sekali (bayar poin)")
+    sp.add_argument("-y", "--yes", action="store_true")
+    sp.set_defaults(fn=cmd_spin)
+    c = sub.add_parser("claim", help="klaim hadiah asli roulette")
+    c.add_argument("id", type=int)
+    c.add_argument("contact", help="alamat Base (USDC) atau email (merch)")
+    c.add_argument("post", help="link reply-mu di X")
+    c.add_argument("-y", "--yes", action="store_true")
+    c.set_defaults(fn=cmd_claim)
     a = ap.parse_args()
     try:
         a.fn(a)

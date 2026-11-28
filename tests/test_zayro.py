@@ -141,3 +141,15 @@ def test_bug_report_validates_and_sends_note(z):
     assert route == "/missions/claim" and body["mission"] == "bug"
     assert body["note"] == "Tombol close gagal saat harga lompat, ulangi: buka 1000x BTC"
     assert body["url"] == "https://x.com/a/status/1"
+
+
+def test_spin_and_claim_are_signed_requests(z):
+    z.register_session(nonce=0)
+    z.spin()
+    route, body = z.http.posts[-1]
+    msg = f"zayro case: {z.address.lower()} at {body['at']}"
+    assert route == "/cases"
+    assert Account.recover_message(encode_defunct(text=msg), signature=body["signature"]) == body["sessionKey"]
+    z.claim_prize(7, " 0xabc ", "https://x.com/me/status/1")
+    route, body = z.http.posts[-1]
+    assert route == "/cases/claim" and body["id"] == 7 and body["contact"] == "0xabc"

@@ -8,6 +8,8 @@
 #   bash deploy/zayro.sh run         # garap sekarang (wallet dibuat otomatis kalau belum ada)
 #
 #   bash deploy/zayro.sh bug "apa yang rusak + cara mengulanginya" [https://link-screenshot]
+#   bash deploy/zayro.sh spin                          # putar roulette sekali (bayar 500 poin)
+#   bash deploy/zayro.sh claim ID ALAMAT_BASE|EMAIL LINK_REPLY_X
 #   bash deploy/zayro.sh status|log|update|uninstall
 set -euo pipefail
 
@@ -61,10 +63,10 @@ case "$CMD" in
   install) do_install ;;
   test) need_py; cd "$APP_DIR" && "$PY" -m zayro test-notify ;;
   run) need_py; cd "$APP_DIR" && "$PY" -m zayro daily --notify ;;
-  bug) need_py; shift; cd "$APP_DIR" && "$PY" -m zayro bug "$@" ;;
+  bug|spin|claim) need_py; shift; cd "$APP_DIR" && "$PY" -m zayro "$CMD" "$@" ;;
   status) need_py; cd "$APP_DIR" && "$PY" -m zayro status; echo; crontab -l 2>/dev/null | grep -F "$MARK" >/dev/null && echo "Cron: aktif (tiap jam, menit ke-17)" || echo "Cron: TIDAK aktif" ;;
   log) tail -n 50 "$APP_DIR/zayro.log" 2>/dev/null || echo "Belum ada log." ;;
   update) git -C "$APP_DIR" pull --ff-only && need_py && "$PY" -m pip install -q "web3>=8.0" "requests>=2.31" "python-dotenv>=1.0" && say "Diperbarui." ;;
   uninstall) ( crontab -l 2>/dev/null | grep -vF "$MARK" || true ) | crontab -; say "Cron dihapus. Wallet (.env.zayro) TIDAK dihapus." ;;
-  *) sed -n '2,13p' "$0" ;;
+  *) sed -n '2,14p' "$0" ;;
 esac
