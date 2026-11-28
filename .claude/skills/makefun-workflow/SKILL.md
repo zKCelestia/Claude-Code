@@ -22,6 +22,20 @@ playbook: what to do in order, and what we learned the hard way in the first ses
   typed it, and make.fun login and the run record need bos's own typed prompt. Give bos the text to
   paste and let bos open the session.
 
+## Setup: otak dan builder (sejak 28 Nov)
+
+- **Sesi otak** (sesi Liz yang lama): pantau bounty baru (`makefun/tools/scout.py`, jadwal tiap 4 jam),
+  cek hasil tiap pagi, siapkan prompt builder siap tempel di `makefun/scout/<slug>.md`.
+- **Sesi builder**: satu bounty = satu sesi Claude Code BARU yang dibuka bos sendiri (supaya
+  `thinking_in_window` dan `thinking_fresh` lolos, dan pesan pertamanya benar-benar dari bos). Builder
+  login @arsyi, jalankan `init` sebelum menulis file apa pun, bangun, mock-judge, lalu submit.
+- **Mock judge asli**: `python3 makefun/tools/judge_ab.py --rules <kit>/RULES.txt --a <screenshots>
+  --b submission:<id top entry>` memakai model judge make.fun (z-ai/glm-5.3-flash, OpenRouter, key
+  disuntik proxy environment). Satu game = dua panggilan berurutan terbalik, skor pakai rumus
+  make.fun. Bandingkan dengan entry TERATAS (final heat hanya berisi yang terbaik), bukan tetangga.
+  Untuk one-liner: `--a-text "..." --b-text "..."`.
+- Bounty khusus Freebuff: bos yang membangun di VPS, Liz memandu (lihat Results log 28 Nov).
+
 ## 1. Scout
 
 - `GET /api/competitions?status=open` (all pages), keep those with `deadline > now` and `publishedAt <= now`.
