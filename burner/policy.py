@@ -61,27 +61,31 @@ def _today() -> str:
 
 
 class Guard:
-    def __init__(self) -> None:
+    def __init__(self, policy_path: Path | None = None, ledger_path: Path | None = None) -> None:
+        # Default: policy & ledger burner. Wallet lain (mis. zayro) memakai file sendiri,
+        # dengan aturan blokir yang sama persis.
+        self.policy_path = policy_path or POLICY_PATH
+        self.ledger_path = ledger_path or LEDGER_PATH
         self._lock = threading.Lock()
         self.reload()
 
     # ---------- state ----------
     def reload(self) -> None:
-        if not POLICY_PATH.exists():
+        if not self.policy_path.exists():
             raise PolicyError(
-                "burner_policy.json belum ada. Salin dari burner/policy.example.json lalu sesuaikan."
+                f"{self.policy_path.name} belum ada. Salin dari burner/policy.example.json lalu sesuaikan."
             )
-        self.policy = json.loads(POLICY_PATH.read_text())
+        self.policy = json.loads(self.policy_path.read_text())
         self.ledger = (
-            json.loads(LEDGER_PATH.read_text())
-            if LEDGER_PATH.exists()
+            json.loads(self.ledger_path.read_text())
+            if self.ledger_path.exists()
             else {"paused": False, "spent": {}, "history": []}
         )
 
     def _save(self) -> None:
-        tmp = LEDGER_PATH.with_suffix(".tmp")
+        tmp = self.ledger_path.with_suffix(".tmp")
         tmp.write_text(json.dumps(self.ledger, indent=2))
-        tmp.replace(LEDGER_PATH)
+        tmp.replace(self.ledger_path)
 
     @property
     def paused(self) -> bool:

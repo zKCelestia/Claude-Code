@@ -8,12 +8,15 @@
     python -m zayro mission follow               # misi X: follow | post|quote|reply|story|content URL
     python -m zayro spin                         # putar roulette sekali (manual, konfirmasi)
     python -m zayro claim ID ALAMAT_BASE|EMAIL LINK_REPLY_X
+    python -m zayro wallet                       # saldo ETH & test USDC
+    python -m zayro trade [BTC|ETH|SOL|XRP]      # satu trade kecil sekarang
 
-`daily` membaca ZAYRO_REF / ZAYRO_NAME dari .env, membuat wallet sendiri kalau belum ada,
+`daily` membaca ZAYRO_REF / ZAYRO_NAME / ZAYRO_ONCHAIN dari .env, membuat wallet sendiri kalau belum ada,
 dan dengan --notify hanya mengirim pesan kalau ada yang diklaim atau ada error baru.
 """
 
 import argparse
+import os
 import sys
 
 from dotenv import load_dotenv
@@ -22,6 +25,7 @@ from . import notify
 from .client import ENV_PATH, ROOT, Zayro, ZayroError, create_wallet
 
 LAST_ERROR = ROOT / ".zayro_last_error"
+LAST_ERROR_ONCHAIN = ROOT / ".zayro_last_error_onchain"
 
 
 def _show(label: str, res: dict) -> None:
@@ -59,8 +63,6 @@ def _report(a, text: str) -> None:
 
 
 def cmd_daily(a):
-    import os
-
     ref = os.environ.get("ZAYRO_REF", "").strip().lower() or None
     name = os.environ.get("ZAYRO_NAME", "").strip() or None
     try:
@@ -69,6 +71,8 @@ def cmd_daily(a):
             _report(a, f"🆕 Wallet zayro dibuat: {addr}\nKuncinya di {ENV_PATH.name} di VPS. Backup file itu.")
         z = Zayro()
         lines = z.autorun(ref, name)
+        if os.environ.get("ZAYRO_ONCHAIN", "").strip() in ("1", "true", "yes"):
+            lines += _onchain(z)
         summary = z.summary()
     except Exception as e:  # jaringan, relayer, RPC
         msg = f"⚠️ zayro gagal: {e}"
@@ -86,10 +90,54 @@ def cmd_daily(a):
         print("Tidak ada yang perlu diklaim.\n" + summary)
 
 
+def _onchain(z) -> list[str]:
+    """Swap ETH yang ada + satu trade kecil per hari. Error dilaporkan sekali saja."""
+    from .onchain import ZayroChain
+
+    try:
+        lines = ZayroChain(z).autorun()
+        LAST_ERROR_ONCHAIN.unlink(missing_ok=True)
+    except Exception as e:
+        msg = f"⚠️ on-chain: {e}"
+        old = LAST_ERROR_ONCHAIN.read_text() if LAST_ERROR_ONCHAIN.exists() else ""
+        LAST_ERROR_ONCHAIN.write_text(msg)
+        print(msg)
+        return [msg] if msg != old else []
+    if any(line.startswith("✓ trade") for line in lines):
+        # first-trade (+100) langsung diklaim setelah trade pertama selesai
+        lines += [f"✓ misi {mid}" for mid, res in z.claim_auto_missions() if res.get("ok")]
+    return lines
+
+
 def cmd_status(_, z=None):
     z = z or Zayro()
     print("Wallet:", z.address)
     print(z.summary())
+
+
+def cmd_wallet(_):
+    from .onchain import ZayroChain
+
+    z = Zayro()
+    print("Wallet:", z.address)
+    print(ZayroChain(z).summary())
+
+
+def cmd_trade(a):
+    from .onchain import TRADE_LEVERAGE, TRADE_MARGIN, ZayroChain
+
+    z = Zayro()
+    ch = ZayroChain(z)
+    print(ch.summary())
+    print(f"Buka {a.coin} {TRADE_LEVERAGE}× margin ${TRADE_MARGIN} (arah acak), tahan sebentar, lalu tutup.")
+    if not a.yes and input("Lanjut? (y/N) ").strip().lower() != "y":
+        print("Batal.")
+        return
+    for line in ch.trade_once(a.coin.upper()):
+        print(line)
+    for mid, res in z.claim_auto_missions():
+        if res.get("ok"):
+            print(f"✓ misi {mid}")
 
 
 def cmd_bug(a):
@@ -214,6 +262,11 @@ def main() -> None:
     mi.add_argument("kind")
     mi.add_argument("url", nargs="?")
     mi.set_defaults(fn=cmd_mission)
+    sub.add_parser("wallet", help="saldo ETH & test USDC").set_defaults(fn=cmd_wallet)
+    tr = sub.add_parser("trade", help="satu trade kecil sekarang (gasless)")
+    tr.add_argument("coin", nargs="?", default="BTC")
+    tr.add_argument("-y", "--yes", action="store_true")
+    tr.set_defaults(fn=cmd_trade)
     sp = sub.add_parser("spin", help="putar roulette sekali (bayar poin)")
     sp.add_argument("-y", "--yes", action="store_true")
     sp.set_defaults(fn=cmd_spin)

@@ -222,6 +222,8 @@ python -m zayro daily                                # check-in harian + misi ya
 python -m zayro status
 ```
 
+On-chain (opsional): isi `ZAYRO_ONCHAIN=1` di `.env`. Setiap jam cron menukar ETH testnet yang ada di wallet zayro ke test USDC (transfer ETH ke alamat swap zayro, lewat Guard `burner/` dengan `zayro_policy.json`: batas 0,2 ETH/hari, hanya alamat swap yang diizinkan) dan membuka-menutup satu posisi kecil per hari ($10 × 50, gasless). ETH-nya diklaim manual dari faucet (ada captcha). Stake ZAYRO tidak diotomatiskan karena butuh `approve`, yang selalu diblokir Guard. `bash deploy/zayro.sh wallet` untuk saldo, `bash deploy/zayro.sh trade` untuk satu trade sekarang.
+
 Misi X: `bash deploy/zayro.sh mission follow` (setelah follow) atau `mission post|quote|reply LINK_POST_X`.
 
 Roulette: `bash deploy/zayro.sh spin` (sekali putar, potong 500 poin) dan `bash deploy/zayro.sh claim ID ALAMAT_BASE LINK_REPLY_X` kalau menang hadiah asli.

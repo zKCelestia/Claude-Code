@@ -22,3 +22,7 @@ monitor/state.json
 .env.tmp
 zayro.log
 .zayro_last_error
+zayro_policy.json
+zayro_ledger.json
+.zayro_state.json
+.zayro_last_error_onchain

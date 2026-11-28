@@ -172,3 +172,75 @@ def test_inactive_session_key_is_reregistered(z):
     assert z.claim_mission("checkin")["ok"]
     assert z.env["ZAYRO_SESSION_KEY"] != old
     assert [r for r, _ in z.http.posts[-3:]] == ["/missions/claim", "/session-key", "/missions/claim"]
+
+
+# ---------------------------------------------------------------- on-chain
+import json as _json
+
+from eth_account.messages import encode_typed_data
+
+import zayro.onchain as zo
+from burner.policy import Guard, PolicyError
+
+
+@pytest.fixture
+def chain(z, tmp_path, monkeypatch):
+    monkeypatch.setattr(zo, "POLICY_PATH", tmp_path / "zayro_policy.json")
+    monkeypatch.setattr(zo, "LEDGER_PATH", tmp_path / "zayro_ledger.json")
+    monkeypatch.setattr(zo, "STATE_PATH", tmp_path / ".zayro_state.json")
+    z.register_session(nonce=0)
+    return zo.ZayroChain(z, sleep=lambda s: None)
+
+
+def test_zayro_policy_only_allows_swap_address(chain):
+    g = chain.guard
+    assert g.check_evm_call(zo.CHAIN, zo.SWAP_TO, "0x")
+    with pytest.raises(PolicyError):
+        g.check_evm_call(zo.CHAIN, "0x" + "11" * 20, "0x")
+    approve = "0x095ea7b3" + "00" * 12 + "22" * 20 + "00" * 31 + "01"
+    with pytest.raises(PolicyError):
+        g.check_evm_call(zo.CHAIN, zo.SWAP_TO, approve)
+    assert _json.loads(zo.POLICY_PATH.read_text())["evm"][zo.CHAIN]["max_per_day"] == "0.2"
+
+
+def test_burner_guard_default_paths_unchanged():
+    import burner.policy as bp
+
+    assert Guard.__init__.__defaults__ == (None, None) and bp.POLICY_PATH.name == "burner_policy.json"
+
+
+def test_open_and_close_intents_signed_by_session_key(chain):
+    body = chain.open_intent(0, True, 10, 50)
+    it = body["intent"]
+    assert it["margin"] == "10000000" and it["leverage"] == 50 and it["isLong"] is True
+    msg = {**it, "margin": int(it["margin"]), "limitPrice": 0, "deadline": int(it["deadline"]), "nonce": int(it["nonce"])}
+    typed = {
+        "types": {"EIP712Domain": zo.DOMAIN_TYPE, "OpenIntent": zo.OPEN_TYPE},
+        "primaryType": "OpenIntent",
+        "domain": {"name": "Zayro Orders", "version": "2", "chainId": zo.CHAIN_ID, "verifyingContract": zo.ORDERS},
+        "message": msg,
+    }
+    signer = Account.recover_message(encode_typed_data(full_message=typed), signature=body["signature"])
+    assert signer == chain.z.ensure_session().address
+    close = chain.close_intent(42)["intent"]
+    assert close["positionId"] == "42" and close["user"] == chain.z.address
+
+
+def test_swap_refuses_when_swap_address_changes(chain, monkeypatch):
+    monkeypatch.setattr(chain.z, "health", lambda: {"swap": {"open": True, "to": "0x" + "33" * 20, "rate": "10000"}})
+    lines = chain.swap_available()
+    assert lines and "berubah" in lines[0]
+
+
+def test_trade_once_opens_waits_and_closes(chain, monkeypatch):
+    monkeypatch.setattr(chain.z, "health", lambda: {"markets": [{"coin": "BTC", "instrumentId": 0, "retired": False, "opensPaused": False}]})
+    accounts = iter([
+        {"positions": [], "history": []},
+        {"positions": [{"id": "7"}], "history": []},
+        {"positions": [], "history": [{"id": "7", "pnl": "-1500000", "minted": str(150 * 10**18)}]},
+    ])
+    monkeypatch.setattr(chain, "account", lambda: next(accounts))
+    lines = chain.trade_once()
+    routes = [r for r, _ in chain.z.http.posts]
+    assert "/open" in routes and "/close" in routes
+    assert "PnL -1.50" in lines[0] and "+150 ZAYRO" in lines[0]
