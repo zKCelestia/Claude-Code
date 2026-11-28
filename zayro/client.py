@@ -204,6 +204,16 @@ class Zayro:
         sig = sk.sign_message(encode_defunct(text=message)).signature.hex()
         return {"sessionKey": sk.address, "signature": sig if sig.startswith("0x") else "0x" + sig}
 
+    def _signed(self, route: str, message: str, extra: dict | None = None) -> dict:
+        """POST bertanda tangan session key. Kalau relayer bilang session key tidak aktif
+        (dicabut/kedaluwarsa di kontrak), daftar ulang sekali lalu ulangi."""
+        res = self._post(route, {"user": self.address, **self.session_sign(message), **(extra or {})})
+        if not res.get("ok") and "session key is not active" in str(res.get("reason", "")).lower():
+            self.env.pop("ZAYRO_SESSION_KEY", None)
+            self.env.pop("ZAYRO_SESSION_EXPIRY", None)
+            res = self._post(route, {"user": self.address, **self.session_sign(message), **(extra or {})})
+        return res
+
     # aksi
     def _addr(self) -> str:
         return self.address.lower()
@@ -211,40 +221,38 @@ class Zayro:
     def bind_referral(self, code: str) -> dict:
         code = code.strip().lower()
         msg = f"zayro referral: {self._addr()} joins with code {code}"
-        return self._post("/referral/bind", {"user": self.address, **self.session_sign(msg), "code": code})
+        return self._signed("/referral/bind", msg, {"code": code})
 
     def my_code(self) -> dict:
-        return self._post("/referral/code", {"user": self.address, **self.session_sign(f"zayro code: {self._addr()}")})
+        return self._signed("/referral/code", f"zayro code: {self._addr()}")
 
     def set_name(self, name: str) -> dict:
         at = int(time.time() * 1000)
         msg = f"zayro name: {self._addr()} {name} at {at}"
-        return self._post("/names", {"user": self.address, **self.session_sign(msg), "name": name, "at": at})
+        return self._signed("/names", msg, {"name": name, "at": at})
 
     def claim_mission(self, mission_id: str, url: str | None = None, note: str | None = None) -> dict:
         at = int(time.time() * 1000)
         msg = f"zayro mission: {self._addr()} {mission_id} at {at}"
-        body = {"user": self.address, **self.session_sign(msg), "mission": mission_id, "at": at}
+        body = {"mission": mission_id, "at": at}
         if url:
             body["url"] = url
         if note:
             body["note"] = note
-        return self._post("/missions/claim", body)
+        return self._signed("/missions/claim", msg, body)
 
     def spin(self) -> dict:
         """Putar roulette sekali (bayar poin, biasanya 500). Hasil: {'ok', 'draw': {...}}."""
         at = int(time.time() * 1000)
         msg = f"zayro case: {self._addr()} at {at}"
-        return self._post("/cases", {"user": self.address, **self.session_sign(msg), "at": at})
+        return self._signed("/cases", msg, {"at": at})
 
     def claim_prize(self, draw_id: int, contact: str, post: str) -> dict:
         """Klaim hadiah asli. contact = alamat Base (USDC) atau email (merch); post = link reply di X."""
         at = int(time.time() * 1000)
         contact, post = contact.strip(), post.strip()
         msg = f"zayro case claim: {self._addr()} {draw_id} to {contact} at {at}"
-        return self._post(
-            "/cases/claim", {"user": self.address, **self.session_sign(msg), "id": draw_id, "contact": contact, "post": post, "at": at}
-        )
+        return self._signed("/cases/claim", msg, {"id": draw_id, "contact": contact, "post": post, "at": at})
 
     def report_bug(self, note: str, url: str | None = None) -> dict:
         """Kirim laporan bug (misi 'bug', direview tim zayro). Tulis manual: apa yang rusak + cara mengulanginya."""

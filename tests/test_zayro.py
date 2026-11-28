@@ -153,3 +153,22 @@ def test_spin_and_claim_are_signed_requests(z):
     z.claim_prize(7, " 0xabc ", "https://x.com/me/status/1")
     route, body = z.http.posts[-1]
     assert route == "/cases/claim" and body["id"] == 7 and body["contact"] == "0xabc"
+
+
+def test_inactive_session_key_is_reregistered(z):
+    z.register_session(nonce=0)
+    old = z.env["ZAYRO_SESSION_KEY"]
+    replies = iter([{"ok": False, "reason": "session key is not active"}, {"ok": True}, {"ok": True}])
+    real_post = z.http.post
+
+    def post(url, json=None, timeout=None):
+        if url.endswith("/missions/claim") or url.endswith("/session-key"):
+            z.http.posts.append((url.rsplit("/api-giwa", 1)[1], json))
+            return Resp(next(replies))
+        return real_post(url, json=json, timeout=timeout)
+
+    z.http.post = post
+    z._nonce = lambda: 1
+    assert z.claim_mission("checkin")["ok"]
+    assert z.env["ZAYRO_SESSION_KEY"] != old
+    assert [r for r, _ in z.http.posts[-3:]] == ["/missions/claim", "/session-key", "/missions/claim"]
