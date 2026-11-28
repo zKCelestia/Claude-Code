@@ -16,3 +16,7 @@ delphi/submissions.jsonl
 # monitor (state lokal)
 monitor/watchlist.json
 monitor/state.json
+
+# zayro: wallet testnet (rahasia)
+.env.zayro
+.env.tmp

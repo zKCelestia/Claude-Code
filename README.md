@@ -209,6 +209,27 @@ setiap ID di `ALLOWED_USER_IDS`. Autopilot berhenti saat `/stop`.
   dan daftarkan host-nya (lihat "Menyalakan pencarian web").
 - Test guard: `pip install "web3[tester]" pytest && pytest tests/`
 
+## zayro.trade (testnet, gasless)
+
+`zayro/` mengotomatiskan poin [zayro.trade](https://zayro.trade), DEX perpetual di testnet
+GIWA Sepolia. Semua aksinya cuma tanda tangan yang dikirim ke relayer zayro: modul ini tidak
+pernah mengirim transaksi on-chain, jadi wallet-nya tidak butuh gas dan tidak bisa kehilangan dana.
+
+```bash
+python -m zayro init                                 # wallet baru di .env.zayro (izin 600)
+python -m zayro setup --ref 69961778 --name namamu   # session key, referral, username, misi
+python -m zayro daily                                # check-in harian + misi yang siap
+python -m zayro status
+```
+
+Pasang `daily` di cron, misalnya `17 1 * * * cd ~/Claude-Code && python3 -m zayro daily`.
+Yang diklaim otomatis: check-in, referred, username, first-trade, staked, invite. Misi X (post,
+quote, reply, follow) dan yang direview tim dikerjakan manual di web. Trading butuh test USDC,
+dan karena faucet zayro sedang tutup, USDC didapat dengan swap test ETH di menu wallet web-nya.
+
+- `.env.zayro` adalah kunci wallet. Backup kalau poinnya penting, dan jangan commit.
+- Satu wallet saja. Poin testnet tidak punya nilai dan belum ada airdrop yang diumumkan.
+
 ## Cara kerja
 
 - **`setup_agent.py`** dijalankan sekali. Script ini membuat *Environment* dan *Agent* di
