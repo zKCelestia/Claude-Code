@@ -146,3 +146,7 @@ playbook: what to do in order, and what we learned the hard way in the first ses
 - 2026-11-28 stats site round 3: v2 #280/6,501 (0.589) vs v1 round 2 #248/5,473 (0.611): same
   top ~4.4% in a bigger field; the real-judge mock had v2 over v1 0.65-0.35, so v2 stays the entry.
   Far from the final heat's 40 seats; not worth another version for a $50 pool.
+- 2026-11-28 make-minecraft-01 round 1: Rising Tide #88/441 (0.607); 50 paid. Neighbours are
+  mostly the brief's own example twists (Skyfall/Upfall gravity islands) and even another rising-tide
+  lighthouse game: an example or familiar twist sits mid-table. Next: Batu Kunci (Indonesian candi +
+  gempa) built by bos in Freebuff, aim for round 2 (29 Nov 09:00 UTC).
