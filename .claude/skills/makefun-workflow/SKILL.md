@@ -125,3 +125,7 @@ playbook: what to do in order, and what we learned the hard way in the first ses
   paid); worst AI pickup "added you to my training data" 0.558, outside the top 200; printer
   "Error 49.4C02" round 2 #133/3,494 (0.632), final 29 Nov 02:35. A concrete named target at the
   end (Greg) beat abstract creepiness.
+- 2026-11-28 finals: flight game v3 (round 3 #127/17,578) final heat 0.619, outside the top 200
+  (#1 0.911); news-image 26 Nov (~#108 by dev rate) final heat 0.693, outside the top 200 (#1 0.858).
+  No prize. Lesson: a strong dev/round rank is not a final place; the final heat re-judges against
+  the best entries only, where our generic look loses. Aim covers at the top entries, not neighbours.
