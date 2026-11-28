@@ -143,3 +143,6 @@ playbook: what to do in order, and what we learned the hard way in the first ses
   (#1 0.911); news-image 26 Nov (~#108 by dev rate) final heat 0.693, outside the top 200 (#1 0.858).
   No prize. Lesson: a strong dev/round rank is not a final place; the final heat re-judges against
   the best entries only, where our generic look loses. Aim covers at the top entries, not neighbours.
+- 2026-11-28 stats site round 3: v2 #280/6,501 (0.589) vs v1 round 2 #248/5,473 (0.611): same
+  top ~4.4% in a bigger field; the real-judge mock had v2 over v1 0.65-0.35, so v2 stays the entry.
+  Far from the final heat's 40 seats; not worth another version for a $50 pool.
