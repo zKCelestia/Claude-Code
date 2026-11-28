@@ -80,6 +80,10 @@ def create_wallet(path: Path = ENV_PATH) -> str:
     return acct.address
 
 
+def _line(label: str, res: dict) -> str:
+    return f"✓ {label}" if res.get("ok") else f"✗ {label}: {res.get('reason')}"
+
+
 # --- klien -------------------------------------------------------------------
 
 
@@ -221,6 +225,38 @@ class Zayro:
         at = int(time.time() * 1000)
         msg = f"zayro mission: {self._addr()} {mission_id} at {at}"
         return self._post("/missions/claim", {"user": self.address, **self.session_sign(msg), "mission": mission_id, "at": at})
+
+    def autorun(self, ref: str | None = None, name: str | None = None) -> list[str]:
+        """Satu putaran otomatis (aman diulang tiap jam): session key, referral dan
+        username kalau belum, lalu klaim misi yang siap. Mengembalikan baris laporan
+        hanya untuk hal yang benar-benar dikerjakan; list kosong = tidak ada kerjaan."""
+        tried = self.__dict__.setdefault("_tried", set())
+        lines = []
+        self.ensure_session()
+        if ref and ref not in tried and self.points().get("referrer") is None:
+            tried.add(ref)
+            res = self.bind_referral(ref)
+            lines.append(_line(f"referral {ref}", res))
+        if name and name not in tried:
+            tried.add(name)
+            m = next((m for m in self.missions() if m.get("claim") == "name"), None)
+            if m and not m.get("done"):
+                lines.append(_line(f"username {name}", self.set_name(name)))
+        for mid, res in self.claim_auto_missions():
+            if res.get("ok") or mid not in tried:  # gagal yang sama cukup dilaporkan sekali
+                lines.append(_line(f"misi {mid}" + (f" +{res['points']}" if res.get("points") else ""), res))
+            if not res.get("ok"):
+                tried.add(mid)
+        return lines
+
+    def summary(self) -> str:
+        p = self.points()
+        todo = [m["id"] for m in self.missions() if not m.get("done")]
+        return (
+            f"Poin: {p.get('points')} | rank {p.get('rank')}\n"
+            f"Kode referral: {p.get('code')} | referrer: {p.get('referrer') or '-'} | referee: {p.get('referees')}\n"
+            f"Misi belum selesai: {', '.join(todo) or '-'}"
+        )
 
     def claim_auto_missions(self) -> list[tuple[str, dict]]:
         """Klaim semua misi yang siap dan tidak butuh X/review. Check-in selalu dicoba."""

@@ -26,6 +26,9 @@ Pemantau airdrop (lihat monitor/):
   /kunci <kata> | /kunci     - tambah kata kunci / lihat daftar
   /cekairdrop                - cek sekarang
 
+zayro.trade (lihat zayro/, aktif kalau ZAYRO_ENABLED=1 di .env):
+  /zayro                     - garap sekarang + lihat poin
+
 Jalankan setelah setup_agent.py:  python bot.py
 """
 
@@ -46,6 +49,7 @@ from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandl
 
 from group_chat import GroupManager, GroupSettings, Incoming
 from monitor import watcher
+from zayro import client as zayro_client
 
 BASE_DIR = Path(__file__).parent
 CONFIG_PATH = BASE_DIR / "agent_config.json"
@@ -686,8 +690,73 @@ async def cekairdrop_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     await run_monitor_once(context.application, notify_empty_to=update.effective_chat.id)
 
 
+# ---------------------------------------------------------------- zayro.trade
+ZAYRO_ENABLED = os.environ.get("ZAYRO_ENABLED", "").strip() in ("1", "true", "yes")
+ZAYRO_REF = os.environ.get("ZAYRO_REF", "").strip().lower() or None
+ZAYRO_NAME = os.environ.get("ZAYRO_NAME", "").strip() or None
+zayro_lock = asyncio.Lock()
+zayro_bot: zayro_client.Zayro | None = None
+
+
+async def notify_owners(app: Application, text: str) -> None:
+    for owner in sorted(ALLOWED_USER_IDS):
+        try:
+            await app.bot.send_message(chat_id=owner, text=text)
+        except Exception:
+            log.exception("Gagal kirim pesan ke %s", owner)
+
+
+async def zayro_run(app: Application) -> tuple[list[str], str]:
+    """Satu putaran zayro. Wallet dibuat otomatis kalau belum ada."""
+    global zayro_bot
+    async with zayro_lock:
+        if zayro_bot is None:
+            if not zayro_client.ENV_PATH.exists():
+                addr = await asyncio.to_thread(zayro_client.create_wallet)
+                await notify_owners(
+                    app,
+                    f"🆕 Wallet zayro dibuat: {addr}\nKuncinya di {zayro_client.ENV_PATH.name} di VPS. "
+                    "Backup file itu, karena poinnya nempel di wallet ini.",
+                )
+            zayro_bot = zayro_client.Zayro()
+        lines = await asyncio.to_thread(zayro_bot.autorun, ZAYRO_REF, ZAYRO_NAME)
+        summary = await asyncio.to_thread(zayro_bot.summary)
+    return lines, summary
+
+
+async def zayro_loop(app: Application) -> None:
+    """Tiap jam: klaim check-in & misi yang siap. Lapor hanya kalau ada yang dikerjakan."""
+    await asyncio.sleep(90)
+    while True:
+        try:
+            lines, summary = await zayro_run(app)
+            if lines:
+                await notify_owners(app, "🟢 zayro\n" + "\n".join(lines) + "\n\n" + summary)
+        except Exception as e:
+            log.exception("zayro error")
+            await notify_owners(app, f"⚠️ zayro gagal: {e}")
+        await asyncio.sleep(3600)
+
+
+async def zayro_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not is_allowed(update):
+        return
+    if not ZAYRO_ENABLED:
+        await update.message.reply_text("zayro belum aktif. Isi ZAYRO_ENABLED=1 di .env lalu restart bot.")
+        return
+    try:
+        lines, summary = await zayro_run(context.application)
+    except Exception as e:
+        await update.message.reply_text(f"⚠️ zayro gagal: {e}")
+        return
+    head = "\n".join(lines) if lines else "Nggak ada yang perlu diklaim sekarang."
+    await update.message.reply_text(f"{head}\n\nWallet: {zayro_bot.address}\n{summary}")
+
+
 async def post_init(app: Application) -> None:
     global groups
+    if ZAYRO_ENABLED and ALLOWED_USER_IDS:
+        app.create_task(zayro_loop(app))
     app.create_task(autopilot_loop(app))
     app.create_task(watchdog_loop(app))
     app.create_task(monitor_loop(app))
@@ -719,6 +788,7 @@ def main() -> None:
     app.add_handler(CommandHandler("lepas", lepas_cmd))
     app.add_handler(CommandHandler("kunci", kunci_cmd))
     app.add_handler(CommandHandler("cekairdrop", cekairdrop_cmd))
+    app.add_handler(CommandHandler("zayro", zayro_cmd))
     # Grup: semua pesan teks (termasuk dari bot lain) masuk inbox grup.
     app.add_handler(MessageHandler(filters.ChatType.GROUPS & filters.TEXT & ~filters.COMMAND, handle_group_message))
     # Chat pribadi dengan pemilik: perilaku lama (teks, file, foto).

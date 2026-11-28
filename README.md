@@ -222,7 +222,10 @@ python -m zayro daily                                # check-in harian + misi ya
 python -m zayro status
 ```
 
-Pasang `daily` di cron, misalnya `17 1 * * * cd ~/Claude-Code && python3 -m zayro daily`.
+**Lewat bot (otomatis):** isi `ZAYRO_ENABLED=1` (opsional `ZAYRO_REF`, `ZAYRO_NAME`) di `.env`
+lalu restart. Bot membuat wallet sendiri kalau `.env.zayro` belum ada, menggarap tiap jam, dan
+lapor ke Telegram hanya kalau ada yang diklaim. `/zayro` untuk garap sekarang dan lihat poin.
+Tanpa bot, pasang `daily` di cron: `17 1 * * * cd ~/Claude-Code && .venv/bin/python -m zayro daily`.
 Yang diklaim otomatis: check-in, referred, username, first-trade, staked, invite. Misi X (post,
 quote, reply, follow) dan yang direview tim dikerjakan manual di web. Trading butuh test USDC,
 dan karena faucet zayro sedang tutup, USDC didapat dengan swap test ETH di menu wallet web-nya.

@@ -94,3 +94,14 @@ def test_auto_missions_skip_x_and_review(z):
 def test_busy_relayer_retried(z):
     z.http.busy = 2
     assert z.register_session(nonce=0)["ok"]
+
+
+def test_autorun_binds_once_and_reports_only_work(z):
+    z.http.missions = [{"id": "checkin", "claim": "checkin", "ready": False, "done": False}]
+    first = z.autorun(ref="69961778")
+    routes = [r for r, _ in z.http.posts]
+    assert "/referral/bind" in routes and "/missions/claim" in routes
+    assert any("referral" in line for line in first)
+    z.http.missions = [{"id": "checkin", "claim": "checkin", "ready": False, "done": True}]
+    n = len(z.http.posts)
+    assert z.autorun(ref="69961778") == [] and len(z.http.posts) == n
