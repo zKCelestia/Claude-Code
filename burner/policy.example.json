@@ -20,6 +20,28 @@
       "max_per_day": "0.01",
       "max_gas_gwei": 5,
       "allowed_contracts": {}
+    },
+    "sepolia": {
+      "chain_id": 11155111,
+      "rpc": "https://ethereum-sepolia-rpc.publicnode.com",
+      "native": "ETH",
+      "max_per_tx": "0.05",
+      "max_per_day": "0.1",
+      "max_gas_gwei": 50,
+      "allowed_contracts": {
+        "0x956962C34687A954e611A83619ABaA37Ce6bC78A": "GIWA OptimismPortal (bridge ke GIWA Sepolia, docs.giwa.io)"
+      }
+    },
+    "giwa_sepolia": {
+      "chain_id": 91342,
+      "rpc": "https://sepolia-rpc.giwa.io",
+      "native": "ETH",
+      "max_per_tx": "0.002",
+      "max_per_day": "0.01",
+      "max_gas_gwei": 1,
+      "allowed_contracts": {
+        "0x7abbC4bB4Fb7aa2cEA082697E87B828A691141CB": "GamaLaunchpad (buy tile, launch.gamatiles.com)"
+      }
     }
   },
   "solana": {

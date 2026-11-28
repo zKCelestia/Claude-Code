@@ -195,6 +195,23 @@ Lalu isi alamat yang dicetak dengan saldo **seperlunya saja**. Di Telegram:
 Contoh perintah: "mint NFT gratis di kontrak 0x... di Base" (kontraknya harus sudah ada di
 `allowed_contracts`). Setiap transaksi dan penolakan dilaporkan ke chat.
 
+### Garapan Gama di GIWA Sepolia
+
+`policy.example.json` sudah berisi chain `sepolia` (izin: OptimismPortal GIWA untuk bridge)
+dan `giwa_sepolia` (izin: GamaLaunchpad untuk beli tile). Dari mesin bot:
+
+```bash
+python -m burner.giwa status                       # saldo + sisa budget kedua chain
+python -m burner.giwa bridge 0.01                  # Sepolia -> GIWA Sepolia (alamat sama, ~1-3 menit)
+python -m burner.giwa quote 0xTILE 0.0005          # perkiraan token
+python -m burner.giwa buy 0xTILE 0.0005 --slippage 10
+```
+
+ETH GIWA Sepolia juga bisa langsung dari faucet resmi (faucet.giwa.io atau faucet Nodit),
+jadi bridge tidak wajib. Hanya `buy` yang didukung: `sell` butuh approve, dan approve
+selalu diblokir guard. Tile yang sudah graduate ditolak karena tradingnya pindah ke pool DEX.
+Task sosial di event (hubungkan X, follow, repost, konten) tetap dikerjakan manual di browser.
+
 ### Autopilot (jalan sendiri)
 
 Di `burner_policy.json`, set `"autopilot": {"enabled": true, "interval_hours": 6, "prompt": "..."}`
