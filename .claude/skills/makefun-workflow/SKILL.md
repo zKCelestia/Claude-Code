@@ -121,3 +121,7 @@ playbook: what to do in order, and what we learned the hard way in the first ses
   init; Esc + "commit now" when it loops; /exit; `record --stop`; submit with --harness freebuff
   --harness-version <freebuff --version> --provider deepseek --model deepseek/deepseek-v4-flash
   --effort default --mcp none --instructions none (Freebuff's trace holds no model name).
+- 2026-11-28 results: moon "eleven times, Greg" **#13** of ~2,650 (0.714; #1 0.826; only top 5
+  paid); worst AI pickup "added you to my training data" 0.558, outside the top 200; printer
+  "Error 49.4C02" round 2 #133/3,494 (0.632), final 29 Nov 02:35. A concrete named target at the
+  end (Greg) beat abstract creepiness.
