@@ -68,5 +68,5 @@ case "$CMD" in
   log) tail -n 50 "$APP_DIR/zayro.log" 2>/dev/null || echo "Belum ada log." ;;
   update) git -C "$APP_DIR" pull --ff-only && need_py && "$PY" -m pip install -q "web3>=8.0" "requests>=2.31" "python-dotenv>=1.0" && say "Diperbarui." ;;
   uninstall) ( crontab -l 2>/dev/null | grep -vF "$MARK" || true ) | crontab -; say "Cron dihapus. Wallet (.env.zayro) TIDAK dihapus." ;;
-  *) sed -n '2,14p' "$0" ;;
+  *) sed -n '2,13p' "$0" ;;
 esac
